@@ -60,39 +60,34 @@
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<div slot="header" class="clearfix">
 								<span>合约信息</span>
-								<el-button type="primary" style="float: right;" icon="el-icon-refresh" circle></el-button>
+								<el-button @click.prevent="get_game" type="primary" style="float: right;" icon="el-icon-refresh" circle></el-button>
 							</div>
-							{{game.gameid}}
-							{{game.reserve}}
-							{{game.insure}}
-							{{game.max_supply}}
-							{{game.supply}}
-							{{game.balance}}
-							{{game.circulation}}
-							{{game.burn}}
-							{{game.staked}}
-							{{game.fee}}
-							{{game.reward}}
-							{{game.next_refer}}
-							{{game.player_one}}
-							{{game.start_time}}
-							{{game.reward_time}}
+							储备金：{{game.reserve}}
+							保证金：{{game.insure}}
+							发行量：{{game.supply}}
+							代币余额：{{game.balance}}
+							流通量：{{game.circulation}}
+							销毁量：{{game.burn}}
+							头号抵押：{{game.staked}}
+							推荐奖金池：{{game.fee}}
+							头号奖金池：{{game.reward}}
+							下一个推荐码：{{game.next_refer}}
+							头号：{{game.player_one}}
+							开始时间：{{game.start_time}}
+							头号奖励时间：{{game.reward_time}}
 						</el-card>
 					</div>
 					<div class="col-12 col-lg-6 col-xl-6">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<div slot="header" class="clearfix">
 								<span>用户信息</span>
-								<el-button type="primary" style="float: right;" icon="el-icon-refresh" circle></el-button>
+								<el-button type="primary" @click.prevent="get_user"  style="float: right;" icon="el-icon-refresh" circle></el-button>
 							</div>
-							{{user.name}}
-							{{user.parent}}
-							{{user.reward}}
-							{{user.last_action}}
-							{{user.refer}}
-							{{user.invitation}}
-							{{user.discount}}
-							
+							用户名：{{user.name}}
+							推荐奖金：{{user.reward}}
+							上次操作时间：{{user.last_action}}
+							推荐码数量：{{user.refer}}
+							邀请数量：{{user.invitation}}
 						</el-card>
 					</div>
 				</div>
@@ -106,25 +101,25 @@
 									<el-input-number v-model="buyAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="buy" type="primary" plain>购买CGT</el-button>
-									<el-button @click.prevent="deposit" type="info" disabled="true" plain>购买推荐码</el-button>
-									<el-button @click.prevent="invite" type="info" disabled="true" plain>邀请朋友</el-button>
+									<el-button @click.prevent="deposit" type="info" disabled=true plain>购买推荐码</el-button>
+									<el-button @click.prevent="invite" type="info" disabled=true plain>邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="购买推荐码" name="second">
 									<p>请输入EOS数量</p>
 									<el-input-number v-model="depositAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="buy" type="info" disabled="true" plain>购买CGT</el-button>
+									<el-button @click.prevent="buy" type="info" disabled=true plain>购买CGT</el-button>
 									<el-button @click.prevent="deposit" type="primary" plain>购买推荐码</el-button>
-									<el-button @click.prevent="invite" type="info" disabled="true" plain>邀请朋友</el-button>
+									<el-button @click.prevent="invite" type="info" disabled=true plain>邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="邀请朋友" name="third">
 									<p>请输入EOS账号</p>
 									<el-input v-model="invitation" placeholder="EOS账号"></el-input>
 									<br><br>
-									<el-button @click.prevent="buy" type="info" disabled="true" plain>购买CGT</el-button>
-									<el-button @click.prevent="deposit" type="info" disabled="true" plain>购买推荐码</el-button>
+									<el-button @click.prevent="buy" type="info" disabled=true plain>购买CGT</el-button>
+									<el-button @click.prevent="deposit" type="info" disabled=true plain>购买推荐码</el-button>
 									<el-button @click.prevent="invite" type="primary" plain>邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
@@ -140,25 +135,25 @@
 									<el-input-number v-model="sellAmount" @change="handleChange" :min="0" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="sell" type="danger" plain>出售CGT</el-button>
-									<el-button @click.prevent="burn" type="info" disabled="true" plain>销毁CGT</el-button>
-									<el-button @click.prevent="stake" type="info" disabled="true" plain>抵押CGT</el-button>
+									<el-button @click.prevent="burn" type="info" disabled=true plain>销毁CGT</el-button>
+									<el-button @click.prevent="stake" type="info" disabled=true plain>抵押CGT</el-button>
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="销毁CGT" name="second">
 									<p>请输入CGT数量</p>
 									<el-input-number v-model="burnAmount" @change="handleChange" :min="0" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="sell" type="info" disabled="true" plain>出售CGT</el-button>
+									<el-button @click.prevent="sell" type="info" disabled=true plain>出售CGT</el-button>
 									<el-button @click.prevent="burn" type="danger" plain>销毁CGT</el-button>
-									<el-button @click.prevent="stake" type="info" disabled="true" plain>抵押CGT</el-button>
+									<el-button @click.prevent="stake" type="info" disabled=true plain>抵押CGT</el-button>
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="抵押CGT" name="third">
 									<p>请输入CGT数量</p>
 									<el-input-number v-model="stakeAmount" @change="handleChange" :min="1000" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="sell" type="info" disabled="true" plain>出售CGT</el-button>
-									<el-button @click.prevent="burn" type="info" disabled="true" plain>销毁CGT</el-button>
+									<el-button @click.prevent="sell" type="info" disabled=true plain>出售CGT</el-button>
+									<el-button @click.prevent="burn" type="info" disabled=true plain>销毁CGT</el-button>
 									<el-button @click.prevent="stake" type="danger" plain>抵押CGT</el-button>
 									<br>
 								</el-tab-pane>
@@ -297,30 +292,30 @@ export default {
 			secureActive: '1',
 			game:{
 				gameid: "oneplayerone",
-				reserve: "15518.8152 EOS",
-				insure: "17927.0637 EOS",
+				reserve: "0.0000 EOS",
+				insure: "0.0000 EOS",
 				max_supply: "10000000.0000 CGT",
-				supply: "1503761.6000 CGT",
-				balance: "400.0000 CGT",
+				supply: "0.0000 CGT",
+				balance: "0.0000 CGT",
 				circulation: "1503361.6000 CGT",
-				burn: "51000.0000 CGT",
-				staked: "600.0000 CGT",
-				fee: "393.2290 EOS",
-				reward: "213.6844 EOS",
-				next_refer: "playeronefee",
-				player_one: "testuseraaaa",
-				start_time: 1534582387,
-				reward_time: 1534827508
+				burn: "0.0000 CGT",
+				staked: "0.0000 CGT",
+				fee: "0.0000 EOS",
+				reward: "0.0000 EOS",
+				next_refer: "",
+				player_one: "",
+				start_time: 0,
+				reward_time: 0
 			},
 
 			user:{
-				name: "testuseraaai",
-				parent: "playeronefee",
+				name: "",
+				parent: "",
 				reward: "0.0000 EOS",
-				last_action: 1534695451,
+				last_action: 0,
 				refer: 0,
 				invitation: 0,
-				discount: 1
+				discount: 0
 			}
   
 		}
@@ -331,23 +326,24 @@ export default {
 			this.scatter = window.scatter;
 			this.scatter.requireVersion(3.0);
 			this.scatterEosClient = this.scatter.eos(config.eosNetwork, EOS, config.eosOptions, "http");
-		})
-		this.scatter.getIdentity({
-			accounts: [config.eosNetwork]
-		}).then(identity => {
-			if (identity && identity.accounts.length > 0) {
-				this.account = identity.accounts.find(account => account.blockchain === 'eos');
+			this.scatter.getIdentity({
+				accounts: [config.eosNetwork]
+			}).then(identity => {
+				if (identity && identity.accounts.length > 0) {
+					this.account = identity.accounts.find(account => account.blockchain === 'eos');
+					this.$message({
+						message: '用户：' + this.account.name + '登陆成功！',
+						type: 'success'
+					});
+				}
+			}).catch(error => {
 				this.$message({
-					message: '用户：' + this.account.name + '登陆成功！',
-					type: 'success'
+						message: '登陆失败！',
+						type: 'danger'
 				});
-			}
-		}).catch(error => {
-			this.$message({
-					message: '登陆失败！',
-					type: 'danger'
 			});
-		});
+		})
+		
 	},
 
 	methods: {
@@ -390,6 +386,38 @@ export default {
 				if(!error){
 					this.block_height = result.head_block_num;
 				}
+			})
+		},
+		get_game() {
+			this.eosClient.getTableRows({
+				json: "true",
+				code: config.gameContract,
+				scope: config.gameContract,
+				table: 'game',
+				limit: 1,
+				lower_bound: 0
+			}).then((data) => {
+				if (data.rows && data.rows.length > 0) {
+					this.game = data.rows[0];
+				}
+			}).catch((e) => {
+				console.error(e);
+			})
+		},
+		get_user() {
+			this.eosClient.getTableRows({
+				json: "true",
+				code: config.gameContract,
+				scope: this.account.name,
+				table: 'userinfo',
+				limit: 1,
+				lower_bound: 0
+			}).then((data) => {
+				if (data.rows && data.rows.length > 0) {
+					this.user = data.rows[0];
+				}
+			}).catch((e) => {
+				console.error(e);
 			})
 		},
 		buy() {
@@ -629,23 +657,6 @@ export default {
 			}).catch(e => {
 				console.log(e)
 			});
-		},
-		get_global() {
-			this.eosClient.getTableRows({
-				json: "true",
-				code: config.gameContract,
-				scope: config.gameContract,
-				table: 'game',
-				limit: 1,
-				lower_bound: 0
-			}).then((data) => {
-				console.log(data);
-				if (data.rows && data.rows.length > 0) {
-					this.global = data.rows[0];
-				}
-			}).catch((e) => {
-				console.error(e);
-			})
 		},
 		handleClick(tab, event) {
         	console.log(tab, event);
