@@ -25,11 +25,11 @@
 					<b-nav-item-dropdown right>
 						<!-- Using button-content slot -->
 						<template slot="button-content">
-							<b>用户</b>
+							<b>{{ userName }}</b>
 						</template>
 						<b-dropdown-item @click.prevent="login">登录</b-dropdown-item>
 						<b-dropdown-item @click.prevent="logout">注销</b-dropdown-item>
-						<b-dropdown-item @click.prevent="collect_fee">领取推荐奖励</b-dropdown-item>
+						<b-dropdown-item @click.prevent="collect_fee">领取邀请奖励</b-dropdown-item>
 						<b-dropdown-item @click.prevent="collect_reward">领取头号奖励</b-dropdown-item>
 						<b-dropdown-item @click.prevent="unstake">取消头号抵押</b-dropdown-item>
 					</b-nav-item-dropdown>
@@ -69,12 +69,14 @@
 							流通量：{{game.circulation}}
 							销毁量：{{game.burn}}
 							头号抵押：{{game.staked}}
-							推荐奖金池：{{game.fee}}
+							邀请奖金池：{{game.fee}}
 							头号奖金池：{{game.reward}}
-							下一个推荐码：{{game.next_refer}}
+							下一个邀请码：{{game.next_refer}}
 							头号：{{game.player_one}}
 							开始时间：{{game.start_time}}
 							头号奖励时间：{{game.reward_time}}
+							买卖价格：{{ (parseFloat(game.reserve.split(' ')[0])  / (parseFloat(game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(game.circulation.split(' ')[0]) - 1000000)/ 250000)) * 0.9 + 0.05))).toFixed(6)  }}
+							销毁价格：{{ (parseFloat(game.insure.split(' ')[0])  / (parseFloat(game.circulation.split(' ')[0]))).toFixed(6)  }}
 						</el-card>
 					</div>
 					<div class="col-12 col-lg-6 col-xl-6">
@@ -84,9 +86,11 @@
 								<el-button type="primary" @click.prevent="get_user"  style="float: right;" icon="el-icon-refresh" circle></el-button>
 							</div>
 							用户名：{{user.name}}
-							推荐奖金：{{user.reward}}
+							EOS余额：{{user.eosBalance}}
+							CGT余额：{{user.tokenBalance}}
+							邀请奖金：{{user.reward}}
 							上次操作时间：{{user.last_action}}
-							推荐码数量：{{user.refer}}
+							邀请码数量：{{user.refer}}
 							邀请数量：{{user.invitation}}
 						</el-card>
 					</div>
@@ -101,16 +105,16 @@
 									<el-input-number v-model="buyAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="buy" type="primary" plain>购买CGT</el-button>
-									<el-button @click.prevent="deposit" type="info" disabled=true plain>购买推荐码</el-button>
+									<el-button @click.prevent="deposit" type="info" disabled=true plain>购买邀请码</el-button>
 									<el-button @click.prevent="invite" type="info" disabled=true plain>邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
-								<el-tab-pane label="购买推荐码" name="second">
+								<el-tab-pane label="购买邀请码" name="second">
 									<p>请输入EOS数量</p>
 									<el-input-number v-model="depositAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled=true plain>购买CGT</el-button>
-									<el-button @click.prevent="deposit" type="primary" plain>购买推荐码</el-button>
+									<el-button @click.prevent="deposit" type="primary" plain>购买邀请码</el-button>
 									<el-button @click.prevent="invite" type="info" disabled=true plain>邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
@@ -119,7 +123,7 @@
 									<el-input v-model="invitation" placeholder="EOS账号"></el-input>
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled=true plain>购买CGT</el-button>
-									<el-button @click.prevent="deposit" type="info" disabled=true plain>购买推荐码</el-button>
+									<el-button @click.prevent="deposit" type="info" disabled=true plain>购买邀请码</el-button>
 									<el-button @click.prevent="invite" type="primary" plain>邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
@@ -290,6 +294,7 @@ export default {
 			invitation: "",
 			ruleActive: '1',
 			secureActive: '1',
+			userName: '用户',
 			game:{
 				gameid: "oneplayerone",
 				reserve: "0.0000 EOS",
@@ -315,7 +320,9 @@ export default {
 				last_action: 0,
 				refer: 0,
 				invitation: 0,
-				discount: 0
+				discount: 0,
+				tokenBalance: 0,
+				eosBalance: 0,
 			}
   
 		}
@@ -335,6 +342,7 @@ export default {
 						message: '用户：' + this.account.name + '登陆成功！',
 						type: 'success'
 					});
+					this.userName = this.account.name;
 				}
 			}).catch(error => {
 				this.$message({
@@ -363,6 +371,7 @@ export default {
 							message: '用户：' + this.account.name + '登陆成功！',
 							type: 'success'
 						});
+						this.userName = this.account.name;
 					}
 				}).catch(error => {
 					this.$message({
@@ -378,7 +387,7 @@ export default {
 						message: '用户：' + this.account.name + '已经注销！',
 						type: 'warning'
 				});
-				this.$message('用户：' + this.account.name + '注销成功！');
+				this.userName = '用户';
 			});
 		},
 		get_height() {
@@ -398,7 +407,9 @@ export default {
 				lower_bound: 0
 			}).then((data) => {
 				if (data.rows && data.rows.length > 0) {
-					this.game = data.rows[0];
+					for(var key in data.rows[0]) {
+						this.game[key] = data.rows[0][key];
+					}
 				}
 			}).catch((e) => {
 				console.error(e);
@@ -414,10 +425,32 @@ export default {
 				lower_bound: 0
 			}).then((data) => {
 				if (data.rows && data.rows.length > 0) {
-					this.user = data.rows[0];
+					for(var key in data.rows[0]) {
+						this.user[key] = data.rows[0][key];
+					}
 				}
 			}).catch((e) => {
 				console.error(e);
+			})
+
+			this.eosClient.getCurrencyBalance({
+				code: config.gameTokenContract,
+				account: this.account.name,
+				symbol: config.gameToken
+			}).then(res => {
+				this.user['tokenBalance'] = res[0];
+			}, res => {
+				console.log(res);
+			})
+
+			this.eosClient.getCurrencyBalance({
+				code: config.tokenContract,
+				account: this.account.name,
+				symbol: config.mainToken
+			}).then(res => {
+				this.user['eosBalance'] = res[0];
+			}, res => {
+				console.log(res);
 			})
 		},
 		buy() {
@@ -437,7 +470,6 @@ export default {
 						message: '购买成功',
 						offset: 100
 					});
-					console.log(tx)
 				}).catch(e => {
 					console.log(e)
 				})
@@ -457,7 +489,11 @@ export default {
 			var arg = [from, to, amount, memo]
 			this.scatterEosClient.contract(config.gameTokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
-					console.log(tx)
+					this.$notify({
+						title: '通知',
+						message: '出售成功',
+						offset: 100
+					});
 				}).catch(e => {
 					console.log(e)
 				})
@@ -478,7 +514,11 @@ export default {
 			var arg = [from, to, amount, memo]
 			this.scatterEosClient.contract(config.gameTokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
-					console.log(tx)
+					this.$notify({
+						title: '通知',
+						message: '销毁成功',
+						offset: 100
+					});
 				}).catch(e => {
 					console.log(e)
 				})
@@ -487,7 +527,7 @@ export default {
 			});
 		},
 		deposit() {
-			this.$confirm('购买推荐码花费的EOS是不可退回的，是否购买?', '提示', {
+			this.$confirm('购买邀请码花费的EOS是不可退回的，是否购买?', '提示', {
 				confirmButtonText: '确定',
 				cancelButtonText: '取消',
 				type: 'warning'
@@ -503,7 +543,11 @@ export default {
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
-						
+						this.$notify({
+							title: '通知',
+							message: '购买成功',
+							offset: 100
+						});
 					}).catch(e => {
 						if(typeof e.code === 'undefined'){
 							this.$message({
@@ -532,10 +576,17 @@ export default {
 					 
 				});
 			}).catch(() => {
-				this.$message({
-					type: 'info',
-					message: e
-				});          
+				if(typeof e.code === 'undefined'){
+					this.$message({
+						type: 'info',
+						message: '请先登陆scatter钱包！'
+					}); 
+				} else if(e.code == 402) {
+					this.$message({
+						type: 'info',
+						message: '已取消！'
+					}); 
+				}            
 			});
 		},
 		invite() {
@@ -549,7 +600,11 @@ export default {
 			var arg = [from, to, amount, memo]
 			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
-					
+					this.$notify({
+						title: '通知',
+						message: '邀请成功',
+						offset: 100
+					});
 				}).catch(e => {
 					if(typeof e.code === 'undefined'){
 						this.$message({
@@ -590,7 +645,11 @@ export default {
 			var arg = [from, to, amount, memo]
 			this.scatterEosClient.contract(config.gameTokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
-					console.log(tx)
+					this.$notify({
+						title: '通知',
+						message: '抵押成功',
+						offset: 100
+					});
 				}).catch(e => {
 					console.log(e)
 				})
@@ -610,7 +669,11 @@ export default {
 			var arg = [from, to, amount, memo]
 			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
-					console.log(tx)
+					this.$notify({
+						title: '通知',
+						message: '已取消抵押',
+						offset: 100
+					});
 				}).catch(e => {
 					console.log(e)
 				})
@@ -626,11 +689,15 @@ export default {
 			var from = this.account.name;
 			var to = config.gameContract;
 			var amount = "0.0001 " + config.mainToken;
-			var memo = "通过向合约转账0.0001EOS领取推荐人奖励";
+			var memo = "通过向合约转账0.0001EOS领取邀请人奖励";
 			var arg = [from, to, amount, memo]
 			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
-					console.log(tx)
+					this.$notify({
+						title: '通知',
+						message: '领取成功',
+						offset: 100
+					});
 				}).catch(e => {
 					console.log(e)
 				})
@@ -650,7 +717,11 @@ export default {
 			var arg = [from, to, amount, memo]
 			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
-					console.log(tx)
+					this.$notify({
+						title: '通知',
+						message: '领取成功',
+						offset: 100
+					});
 				}).catch(e => {
 					console.log(e)
 				})
