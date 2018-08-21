@@ -6,7 +6,7 @@
 			<b-navbar-brand href="#">EOS头号玩家</b-navbar-brand>
 			<b-collapse is-nav id="nav_collapse">
 				<b-navbar-nav>
-					<b-nav-item href="https://github.com/dabdevelop/playerone/blob/master/playerone/playerone.cpp">合约开源</b-nav-item>
+					<b-nav-item href="https://github.com/dabdevelop/playerone/blob/master/playerone/playerone.cpp" target="_blank_">合约开源</b-nav-item>
 				</b-navbar-nav>
 				<!-- Right aligned nav items -->
 				<b-navbar-nav class="ml-auto">
@@ -14,9 +14,10 @@
 						<b-form-input size="sm" class="mr-sm-2" type="text" placeholder="EOS用户名" v-model="ivtUrl" id="ivtUrl"/>
 						<b-button size="sm" variant="outline-success" class="my-2 my-sm-0" @click.prevent="copyLink">复制邀请链接</b-button>
 					</b-nav-form>
-					<b-nav-item-dropdown text="语言" right>
-						<b-dropdown-item href="#">ZH</b-dropdown-item>
-						<b-dropdown-item href="#">EN</b-dropdown-item>
+					<b-nav-item-dropdown v-bind:text="config.networkName" right>
+						<b-dropdown-item @click.prevent="switchNet('eos')">EOS主网</b-dropdown-item>
+						<b-dropdown-item @click.prevent="switchNet('enu')">ENU主网</b-dropdown-item>
+						<b-dropdown-item @click.prevent="switchNet('dev')">测试网</b-dropdown-item>
 					</b-nav-item-dropdown>
 					<b-nav-item-dropdown right>
 						<!-- Using button-content slot -->
@@ -55,7 +56,7 @@
 					<div class="col-12 col-lg-6 col-xl-6">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<div slot="header" class="clearfix">
-								<span>合约: {{config.gameContract}}</span>
+								<span>合约: {{this.config.gameContract}}</span>
 							</div>
 							CGT发行量(200万):<el-progress :percentage="progress" color="#8e71c7"></el-progress>
 							<!-- <el-progress :text-inside="true" :stroke-width="18" :percentage="progress"></el-progress> -->
@@ -239,13 +240,15 @@ export default {
 		}
 	},
 	created(){
-		this.eosClient = EOS(config.eosOptions);
+		var env = localStorage.getItem('env') != undefined ? localStorage.getItem('env') : 'dev';
+		this.config = config.setENV(env);
+		this.eosClient = EOS(this.config.eosOptions);
 		document.addEventListener('scatterLoaded', scatterExtension => {
 			this.scatter = window.scatter;
 			this.scatter.requireVersion(3.0);
-			this.scatterEosClient = this.scatter.eos(config.eosNetwork, EOS, config.eosOptions, "http");
+			this.scatterEosClient = this.scatter.eos(this.config.eosNetwork, EOS, this.config.eosOptions, "http");
 			this.scatter.getIdentity({
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}).then(identity => {
 				if (identity && identity.accounts.length > 0) {
 					this.account = identity.accounts.find(account => account.blockchain === 'eos');
@@ -274,7 +277,7 @@ export default {
 				});
 			} else {
 				this.scatter.getIdentity({
-					accounts: [config.eosNetwork]
+					accounts: [this.config.eosNetwork]
 				}).then(identity => {
 					if (identity && identity.accounts.length > 0) {
 						this.account = identity.accounts.find(account => account.blockchain === 'eos');
@@ -292,14 +295,19 @@ export default {
 			}
 		},
 		logout() {
-			scatter.forgetIdentity().then(() => {
-				this.$message({
-						message: '用户：' + this.account.name + '已经注销！',
-						type: 'warning'
+			try{
+				scatter.forgetIdentity().then(() => {
+					this.$message({
+							message: '用户：' + this.account.name + '已经注销！',
+							type: 'warning'
+					});
+					this.userName = '用户';
+					this.ivtUrl = "http://eosplayer.one/?ref=playeronefee";
 				});
-				this.userName = '用户';
-				this.ivtUrl = "http://eosplayer.one/?ref=playeronefee";
-			});
+			} catch(e){
+				this.errorNotice(e);
+			}
+			
 		},
 		getHeight() {
 			this.eosClient.getInfo((error, result) => {
@@ -311,8 +319,8 @@ export default {
 		getGame() {
 			this.eosClient.getTableRows({
 				json: "true",
-				code: config.gameContract,
-				scope: config.gameContract,
+				code: this.config.gameContract,
+				scope: this.config.gameContract,
 				table: 'game',
 				limit: 1,
 				lower_bound: 0
@@ -329,7 +337,7 @@ export default {
 		getUser() {
 			this.eosClient.getTableRows({
 				json: "true",
-				code: config.gameContract,
+				code: this.config.gameContract,
 				scope: this.account.name,
 				table: 'userinfo',
 				limit: 1,
@@ -345,9 +353,9 @@ export default {
 			})
 
 			this.eosClient.getCurrencyBalance({
-				code: config.gameTokenContract,
+				code: this.config.gameTokenContract,
 				account: this.account.name,
-				symbol: config.gameToken
+				symbol: this.config.gameToken
 			}).then(res => {
 				this.user['tokenBalance'] = res[0];
 			}, res => {
@@ -355,9 +363,9 @@ export default {
 			})
 
 			this.eosClient.getCurrencyBalance({
-				code: config.tokenContract,
+				code: this.config.tokenContract,
 				account: this.account.name,
-				symbol: config.mainToken
+				symbol: this.config.mainToken
 			}).then(res => {
 				this.user['eosBalance'] = res[0];
 			}, res => {
@@ -367,8 +375,8 @@ export default {
 		getActions() {
 			// hard code， 单个用户的操作记录
 			var account = this.account.name;
-			// 如果是全部人的操作记录, account = config.gameContract
-			// var account = config.gameContract;
+			// 如果是全部人的操作记录, account = this.config.gameContract
+			// var account = this.config.gameContract;
 			// 获取EOS
 			this.eosClient.getActions({
 				account_name: account,
@@ -380,11 +388,11 @@ export default {
 				}).filter(y => {
 					console.log(y);
 					// buy record
-					if (y.account == config.tokenContract && y.name == "transfer" && y.data.to == config.gameContract) {
+					if (y.account == this.config.tokenContract && y.name == "transfer" && y.data.to == this.config.gameContract) {
 						return true;
 					}
 					// sell record 
-					if (y.account == config.gameTokenContract && y.name == "transfer" && y.data.to == config.gameContract) {
+					if (y.account == this.config.gameTokenContract && y.name == "transfer" && y.data.to == this.config.gameContract) {
 						return true;
 					}
 					return true;
@@ -415,9 +423,14 @@ export default {
 			this.progress = parseInt((parseFloat(this.game.supply.split(' ')[0]) / parseFloat(this.game.max_supply.split(' ')[0]) * 500).toFixed(0));
 		},
 		intervalRefresh(){
-			setInterval(() => { 
+			this.interval = setInterval(() => { 
             	this.refresh();
         	}, 500)
+		},
+		switchNet(net){
+			this.logout();
+			localStorage.setItem('env', net);
+			window.location.reload();
 		},
 		copyLink(){
 			var key = document.getElementById("ivtUrl");
@@ -447,15 +460,15 @@ export default {
 		},
 		leaseCPU() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			// hard code
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = parseFloat(0.1).toFixed(4) + ' ' + config.mainToken;
+			var to = this.config.gameContract;
+			var amount = parseFloat(0.1).toFixed(4) + ' ' + this.config.mainToken;
 			var memo = '1d';
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
@@ -492,15 +505,15 @@ export default {
 		},
 		buy() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			// hard code
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = parseFloat(this.buyAmount).toFixed(4) + ' ' + config.mainToken;
+			var to = this.config.gameContract;
+			var amount = parseFloat(this.buyAmount).toFixed(4) + ' ' + this.config.mainToken;
 			var memo = this.refer;
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
@@ -518,15 +531,15 @@ export default {
 		},
 		sell() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			// hard code
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = parseFloat(this.sellAmount).toFixed(4) + ' ' + config.gameToken; 
+			var to = this.config.gameContract;
+			var amount = parseFloat(this.sellAmount).toFixed(4) + ' ' + this.config.gameToken; 
 			var memo = this.refer;
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.gameTokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
@@ -545,15 +558,15 @@ export default {
 		// 退出操作
 		burn() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			// hard code
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = parseFloat(this.burnAmount).toFixed(4) + ' ' + config.gameToken; 
+			var to = this.config.gameContract;
+			var amount = parseFloat(this.burnAmount).toFixed(4) + ' ' + this.config.gameToken; 
 			var memo = "burn";
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.gameTokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
@@ -576,15 +589,15 @@ export default {
 				type: 'warning'
 			}).then(() => {
 				const requiredFields = {
-					accounts: [config.eosNetwork]
+					accounts: [this.config.eosNetwork]
 				}
 				// hard code
 				var from = this.account.name;
-				var to = config.gameContract;
-				var amount = parseFloat(this.depositAmount).toFixed(4) + ' ' + config.mainToken;
+				var to = this.config.gameContract;
+				var amount = parseFloat(this.depositAmount).toFixed(4) + ' ' + this.config.mainToken;
 				var memo = "deposit";
 				var arg = [from, to, amount, memo]
-				this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
+				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
 						this.$notify({
 							title: '通知',
@@ -605,14 +618,14 @@ export default {
 		},
 		invite() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = parseFloat(0.0001).toFixed(4) + ' ' + config.mainToken;
+			var to = this.config.gameContract;
+			var amount = parseFloat(0.0001).toFixed(4) + ' ' + this.config.mainToken;
 			var memo = this.invitation;
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
@@ -630,15 +643,15 @@ export default {
 		},
 		stake() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			// hard code
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = parseFloat(this.stakeAmount).toFixed(4) + ' ' + config.gameToken; 
+			var to = this.config.gameContract;
+			var amount = parseFloat(this.stakeAmount).toFixed(4) + ' ' + this.config.gameToken; 
 			var memo = "stake";
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.gameTokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
@@ -656,15 +669,15 @@ export default {
 		},
 		unstake() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			// hard code
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = "0.0003 " + config.mainToken;
+			var to = this.config.gameContract;
+			var amount = "0.0003 " + this.config.mainToken;
 			var memo = "通过向合约转账0.0003EOS解除抵押";
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
@@ -682,15 +695,15 @@ export default {
 		},
 		collect_fee() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			// hard code
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = "0.0001 " + config.mainToken;
+			var to = this.config.gameContract;
+			var amount = "0.0001 " + this.config.mainToken;
 			var memo = "通过向合约转账0.0001EOS领取邀请人奖励";
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
@@ -708,15 +721,15 @@ export default {
 		},
 		collect_reward() {
 			const requiredFields = {
-				accounts: [config.eosNetwork]
+				accounts: [this.config.eosNetwork]
 			}
 			// hard code
 			var from = this.account.name;
-			var to = config.gameContract;
-			var amount = "0.0002 " + config.mainToken;
+			var to = this.config.gameContract;
+			var amount = "0.0002 " + this.config.mainToken;
 			var memo = "通过向合约转账0.0002EOS领取头号奖励";
 			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
+			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
