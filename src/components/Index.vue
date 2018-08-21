@@ -89,14 +89,14 @@
 					<div class="col-12 col-lg-6 col-xl-6">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<el-tabs v-model="tabActive1" @tab-click="handleClick">
-								<el-tab-pane label="购买CGT" name="first" 
+								<el-tab-pane label="购买" name="first" 
 								v-loading="loading"
 								v-bind:element-loading-text="coolingMsg"
     							element-loading-spinner="el-icon-loading">
 									<p>请输入EOS数量 {{ price + ' EOS/CGT' }}</p> 
 									<el-input-number v-model="buyAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="buy" type="primary">购买CGT</el-button>
+									<el-button @click.prevent="buy" type="primary">购买</el-button>
 									<el-button @click.prevent="deposit" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="invite" type="info" disabled>邀请朋友</el-button>
 									<br>
@@ -105,7 +105,7 @@
 									<p>请输入EOS数量 1EOS/邀请码</p> 
 									<el-input-number v-model="depositAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="buy" type="info" disabled>购买CGT</el-button>
+									<el-button @click.prevent="buy" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="deposit" type="primary" >购买</el-button>
 									<el-button @click.prevent="invite" type="info" disabled>邀请朋友</el-button>
 									<br>
@@ -114,7 +114,7 @@
 									<p>请输入EOS账号</p>
 									<el-input v-model="invitation" placeholder="EOS账号"></el-input>
 									<br><br>
-									<el-button @click.prevent="buy" type="info" disabled>购买CGT</el-button>
+									<el-button @click.prevent="buy" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="deposit" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="invite" type="primary" >邀请朋友</el-button>
 									<br>
@@ -129,31 +129,31 @@
 							v-loading="loading2"
 							v-bind:element-loading-text="coolingMsg2"
 							element-loading-spinner="el-icon-loading">
-								<el-tab-pane label="出售CGT" name="first">
+								<el-tab-pane label="出售" name="first">
 									<p>请输入CGT数量 {{price + ' EOS/CGT' }}</p>
 									<el-input-number v-model="sellAmount" @change="handleChange" :min="0" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="sell" type="danger" >出售CGT</el-button>
-									<el-button @click.prevent="burn" type="info" disabled>销毁CGT</el-button>
-									<el-button @click.prevent="stake" type="info" disabled>抵押CGT</el-button>
+									<el-button @click.prevent="sell" type="danger" >出售</el-button>
+									<el-button @click.prevent="burn" type="info" disabled>退出</el-button>
+									<el-button @click.prevent="stake" type="info" disabled>抵押</el-button>
 									<br>
 								</el-tab-pane>
-								<el-tab-pane label="销毁CGT" name="second">
+								<el-tab-pane label="退出" name="second">
 									<p>请输入CGT数量 {{ burnPrice + ' EOS/CGT'}} </p> 
 									<el-input-number v-model="burnAmount" @change="handleChange" :min="0" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="sell" type="info" disabled>出售CGT</el-button>
-									<el-button @click.prevent="burn" type="danger" >销毁CGT</el-button>
-									<el-button @click.prevent="stake" type="info" disabled>抵押CGT</el-button>
+									<el-button @click.prevent="sell" type="info" disabled>出售</el-button>
+									<el-button @click.prevent="burn" type="danger" >退出</el-button>
+									<el-button @click.prevent="stake" type="info" disabled>抵押</el-button>
 									<br>
 								</el-tab-pane>
-								<el-tab-pane label="抵押CGT" name="third">
+								<el-tab-pane label="抵押" name="third">
 									<p>请输入CGT数量</p>
 									<el-input-number v-model="stakeAmount" @change="handleChange" :min="1000" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="sell" type="info" disabled>出售CGT</el-button>
-									<el-button @click.prevent="burn" type="info" disabled>销毁CGT</el-button>
-									<el-button @click.prevent="stake" type="danger" >抵押CGT</el-button>
+									<el-button @click.prevent="sell" type="info" disabled>出售</el-button>
+									<el-button @click.prevent="burn" type="info" disabled>退出</el-button>
+									<el-button @click.prevent="stake" type="danger" >抵押</el-button>
 									<br>
 								</el-tab-pane>
 							</el-tabs>
@@ -183,7 +183,7 @@ export default {
 			config: config,
 			// 用来获取区块链只读数据，不需要通过scatter
 			eosClient: null,
-			// 用来创建签名。转账、买、卖、销毁都需要用这个
+			// 用来创建签名。转账、买、卖、退出都需要用这个
 			scatterEosClient: null	,
 			tabActive1: 'first',
 			tabActive2: 'first',
@@ -408,7 +408,7 @@ export default {
 			}
 			
 			this.loading2 = (this.game.start_time + 60 * 60 ) > Date.now() / 1000;
-			this.coolingMsg2 = '预售结束前不能卖出、销毁、抵押CGT';
+			this.coolingMsg2 = '预售结束前不能卖出、退出、抵押CGT';
 			this.price = (parseFloat(this.game.reserve.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(this.game.circulation.split(' ')[0]) - 1000000)/ 250000)) * 0.9 + 0.05))).toFixed(4);
 			this.burnPrice = (parseFloat(this.game.insure.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]))).toFixed(4);
 			this.pool = (parseFloat(this.game.reserve.split(' ')[0]) + parseFloat(this.game.insure.split(' ')[0]) + parseFloat(this.game.fee.split(' ')[0]) + parseFloat(this.game.reward.split(' ')[0])).toFixed(0);
@@ -542,7 +542,7 @@ export default {
 				this.errorNotice(e);
 			});
 		},
-		// 销毁操作
+		// 退出操作
 		burn() {
 			const requiredFields = {
 				accounts: [config.eosNetwork]
@@ -557,7 +557,7 @@ export default {
 				contract.transfer(...arg).then(tx => {
 					this.$notify({
 						title: '通知',
-						message: '销毁成功',
+						message: '退出成功',
 						type: 'success',
 						offset: 100
 					});
