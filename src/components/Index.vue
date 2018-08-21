@@ -23,7 +23,7 @@
 						<template slot="button-content">
 							<b>{{ userName }}</b>
 						</template>
-						<b-dropdown-item @click.prevent="login">登录</b-dropdown-item>
+						<b-dropdown-item @click.prevent="login">登陆</b-dropdown-item>
 						<b-dropdown-item @click.prevent="logout">注销</b-dropdown-item>
 						<b-dropdown-item @click.prevent="collect_fee">领取邀请奖励</b-dropdown-item>
 						<b-dropdown-item @click.prevent="collect_reward">领取头号奖励</b-dropdown-item>
@@ -55,39 +55,32 @@
 					<div class="col-12 col-lg-6 col-xl-6">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<div slot="header" class="clearfix">
-								<span>合约信息</span>
-								<el-button @click.prevent="getGame" type="primary" style="float: right;" icon="el-icon-refresh" circle></el-button>
+								<span>合约: {{config.gameContract}}</span>
 							</div>
-							储备金：{{game.reserve}}
-							保证金：{{game.insure}}
-							发行量：{{game.supply}}
-							代币余额：{{game.balance}}
-							流通量：{{game.circulation}}
-							销毁量：{{game.burn}}
-							头号抵押：{{game.staked}}
-							邀请奖金池：{{game.fee}}
-							头号奖金池：{{game.reward}}
-							下一个邀请码：{{game.next_refer}}
-							头号：{{game.player_one}}
-							开始时间：{{game.start_time}}
-							头号奖励时间：{{game.reward_time}}
-							买卖价格：{{ (parseFloat(game.reserve.split(' ')[0])  / (parseFloat(game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(game.circulation.split(' ')[0]) - 1000000)/ 250000)) * 0.9 + 0.05))).toFixed(6)  }}
-							销毁价格：{{ (parseFloat(game.insure.split(' ')[0])  / (parseFloat(game.circulation.split(' ')[0]))).toFixed(6)  }}
+							CGT发行量(200万):<el-progress :percentage="progress" color="#8e71c7"></el-progress>
+							<!-- <el-progress :text-inside="true" :stroke-width="18" :percentage="progress"></el-progress> -->
+							开始时间：{{ new Date(game.start_time * 1000).toLocaleString() }}<br>
+							Pool：{{pool + ' EOS'}}<br>
+							头号：{{game.player_one}}<br>
+							头号奖励：{{game.reward}}<br>
+							头号抵押：{{game.staked}}<br>
+							头号奖励时间：{{ new Date(game.reward_time * 1000).toLocaleString() }}
 						</el-card>
 					</div>
 					<div class="col-12 col-lg-6 col-xl-6">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<div slot="header" class="clearfix">
-								<span>用户信息</span>
-								<el-button type="primary" @click.prevent="getUser"  style="float: right;" icon="el-icon-refresh" circle></el-button>
+								<span>用户：{{user.name}}</span>
 							</div>
-							用户名：{{user.name}}
-							EOS余额：{{user.eosBalance}}
-							CGT余额：{{user.tokenBalance}}
-							邀请奖金：{{user.reward}}
-							上次操作时间：{{user.last_action}}
-							邀请码数量：{{user.refer}}
-							邀请数量：{{user.invitation}}
+							EOS余额：{{user.eosBalance}} <br>
+							CGT余额：{{user.tokenBalance}} <br>
+							邀请奖励：{{user.reward}} <br>
+							邀请码：{{user.refer}} <br>
+							邀请次数：{{user.invitation}} <br>
+							上次操作时间：{{ new Date(user.last_action * 1000).toLocaleString() }}<br>
+							<el-button @click.prevent="login" type="success">登陆</el-button>
+							<el-button @click.prevent="copyLink" type="success">分享</el-button>
+							<el-button @click.prevent="leaseCPU" type="success">租赁CPU</el-button>
 						</el-card>
 					</div>
 				</div>
@@ -96,21 +89,24 @@
 					<div class="col-12 col-lg-6 col-xl-6">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<el-tabs v-model="tabActive1" @tab-click="handleClick">
-								<el-tab-pane label="购买CGT" name="first">
-									<p>请输入EOS数量</p>
+								<el-tab-pane label="购买CGT" name="first" 
+								v-loading="loading"
+								v-bind:element-loading-text="coolingMsg"
+    							element-loading-spinner="el-icon-loading">
+									<p>请输入EOS数量 {{ price + ' EOS/CGT' }}</p> 
 									<el-input-number v-model="buyAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
-									<el-button @click.prevent="buy" type="primary" >购买CGT</el-button>
-									<el-button @click.prevent="deposit" type="info" disabled>购买邀请码</el-button>
+									<el-button @click.prevent="buy" type="primary">购买CGT</el-button>
+									<el-button @click.prevent="deposit" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="invite" type="info" disabled>邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="购买邀请码" name="second">
-									<p>请输入EOS数量</p>
+									<p>请输入EOS数量 1EOS/邀请码</p> 
 									<el-input-number v-model="depositAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled>购买CGT</el-button>
-									<el-button @click.prevent="deposit" type="primary" >购买邀请码</el-button>
+									<el-button @click.prevent="deposit" type="primary" >购买</el-button>
 									<el-button @click.prevent="invite" type="info" disabled>邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
@@ -119,7 +115,7 @@
 									<el-input v-model="invitation" placeholder="EOS账号"></el-input>
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled>购买CGT</el-button>
-									<el-button @click.prevent="deposit" type="info" disabled>购买邀请码</el-button>
+									<el-button @click.prevent="deposit" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="invite" type="primary" >邀请朋友</el-button>
 									<br>
 								</el-tab-pane>
@@ -129,9 +125,12 @@
 					</div>
 					<div class="col-12 col-lg-6 col-xl-6">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
-							<el-tabs v-model="tabActive2" @tab-click="handleClick">
+							<el-tabs v-model="tabActive2" @tab-click="handleClick"
+							v-loading="loading2"
+							v-bind:element-loading-text="coolingMsg2"
+							element-loading-spinner="el-icon-loading">
 								<el-tab-pane label="出售CGT" name="first">
-									<p>请输入CGT数量</p>
+									<p>请输入CGT数量 {{price + ' EOS/CGT' }}</p>
 									<el-input-number v-model="sellAmount" @change="handleChange" :min="0" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="sell" type="danger" >出售CGT</el-button>
@@ -140,7 +139,7 @@
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="销毁CGT" name="second">
-									<p>请输入CGT数量</p>
+									<p>请输入CGT数量 {{ burnPrice + ' EOS/CGT'}} </p> 
 									<el-input-number v-model="burnAmount" @change="handleChange" :min="0" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="sell" type="info" disabled>出售CGT</el-button>
@@ -163,7 +162,10 @@
 				</div>
 			</div>
 		</div>
-
+		<br>
+		<br>
+		<br>
+		<br>
   </div>
 </template>
 
@@ -196,6 +198,14 @@ export default {
 			userName: '用户',
 			ivtUrl: "http://eosplayer.one/?ref=playeronefee",
 			refer: "playeronefee",
+			loading: false,
+			coolingMsg: '正在冷却中 ',
+			loading2: false,
+			coolingMsg2: '正在冷却中 ',
+			price: 0,
+			burnPrice: 0,
+			pool: 0,
+			progress: 0,
 			game:{
 				gameid: "oneplayerone",
 				reserve: "0.0000 EOS",
@@ -211,7 +221,7 @@ export default {
 				next_refer: "",
 				player_one: "",
 				start_time: 0,
-				reward_time: 0
+				reward_time: 0,
 			},
 
 			user:{
@@ -250,15 +260,9 @@ export default {
 					this.getUser();
 				}
 			}).catch(error => {
-				this.$message({
-						message: '登陆失败！',
-						type: 'danger'
-				});
+				this.errorNotice(error);
 			});
 		})
-
-
-		
 	},
 
 	methods: {
@@ -283,10 +287,7 @@ export default {
 						this.getUser();
 					}
 				}).catch(error => {
-					this.$message({
-							message: '登陆失败！',
-							type: 'danger'
-					});
+					this.errorNotice(error);
 				});
 			}
 		},
@@ -322,7 +323,7 @@ export default {
 					}
 				}
 			}).catch((e) => {
-				console.error(e);
+				this.errorNotice(e);
 			})
 		},
 		getUser() {
@@ -340,7 +341,7 @@ export default {
 					}
 				}
 			}).catch((e) => {
-				console.error(e);
+				this.errorNotice(e);
 			})
 
 			this.eosClient.getCurrencyBalance({
@@ -386,7 +387,7 @@ export default {
 					if (y.account == config.gameTokenContract && y.name == "transfer" && y.data.to == config.gameContract) {
 						return true;
 					}
-					return false;
+					return true;
 				});
 			}, res => {
 				console.log(res);
@@ -396,6 +397,22 @@ export default {
 			this.getGame();
 			this.getUser();
 			this.getActions();
+			if(this.game.start_time > Date.now() / 1000){
+				this.loading = (this.game.start_time > Date.now() / 1000);
+				var coolTime = this.game.start_time > Date.now() / 1000 ? (this.game.start_time - Date.now() / 1000).toFixed(0) : 0;
+				this.coolingMsg = '游戏开始倒计时 ' + coolTime + ' s';
+			} else {
+				this.loading = (this.user.last_action > Date.now() / 1000);
+				var coolTime = this.user.last_action > Date.now() / 1000 ? (this.user.last_action - Date.now() / 1000).toFixed(0) : 0;
+				this.coolingMsg = '正在冷却中 ' + coolTime + ' s';
+			}
+			
+			this.loading2 = (this.game.start_time + 60 * 60 ) > Date.now() / 1000;
+			this.coolingMsg2 = '预售结束前不能卖出、销毁、抵押CGT';
+			this.price = (parseFloat(this.game.reserve.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(this.game.circulation.split(' ')[0]) - 1000000)/ 250000)) * 0.9 + 0.05))).toFixed(4);
+			this.burnPrice = (parseFloat(this.game.insure.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]))).toFixed(4);
+			this.pool = (parseFloat(this.game.reserve.split(' ')[0]) + parseFloat(this.game.insure.split(' ')[0]) + parseFloat(this.game.fee.split(' ')[0]) + parseFloat(this.game.reward.split(' ')[0])).toFixed(0);
+			this.progress = parseInt((parseFloat(this.game.supply.split(' ')[0]) / parseFloat(this.game.max_supply.split(' ')[0]) * 500).toFixed(0));
 		},
 		intervalRefresh(){
 			setInterval(() => { 
@@ -427,7 +444,51 @@ export default {
 				message: '邀请链接：'+ this.ivtUrl +' 拷贝成功，快邀请小伙伴来玩吧！',
 				type: 'success'
 			});
-			// alert('私钥拷贝成功');
+		},
+		leaseCPU() {
+			const requiredFields = {
+				accounts: [config.eosNetwork]
+			}
+			// hard code
+			var from = this.account.name;
+			var to = config.gameContract;
+			var amount = parseFloat(0.1).toFixed(4) + ' ' + config.mainToken;
+			var memo = '1d';
+			var arg = [from, to, amount, memo]
+			this.scatterEosClient.contract(config.tokenContract, { requiredFields }).then(contract => {
+				contract.transfer(...arg).then(tx => {
+					this.$notify({
+						title: '通知',
+						message: '租用成功',
+						type: 'success',
+						offset: 100
+					});
+					this.refresh();
+				}).catch(e => {
+					this.errorNotice(e);
+				})
+			}).catch(e => {
+				this.errorNotice(e);
+			});
+		},
+		errorNotice(e){
+			if(typeof e !== 'object'){
+				e = JSON.parse(e);
+			}
+			if(e == {}){
+				this.$message({
+					type: 'info',
+					message: '请先登陆scatter钱包！'
+				}); 
+			} else if(e.code == 402) {
+				this.$message({
+					type: 'warning',
+					message: '已取消！'
+				}); 
+			} else if(e.code == 500) {
+				this.$message.error('交易失败！');
+			}
+			console.log(e);
 		},
 		buy() {
 			const requiredFields = {
@@ -444,14 +505,15 @@ export default {
 					this.$notify({
 						title: '通知',
 						message: '购买成功',
+						type: 'success',
 						offset: 100
 					});
 					this.refresh();
 				}).catch(e => {
-					console.log(e)
+					this.errorNotice(e);
 				})
 			}).catch(e => {
-				console.log(e)
+				this.errorNotice(e);
 			});
 		},
 		sell() {
@@ -469,14 +531,15 @@ export default {
 					this.$notify({
 						title: '通知',
 						message: '出售成功',
+						type: 'success',
 						offset: 100
 					});
 					this.refresh();
 				}).catch(e => {
-					console.log(e)
+					this.errorNotice(e);
 				})
 			}).catch(e => {
-				console.log(e)
+				this.errorNotice(e);
 			});
 		},
 		// 销毁操作
@@ -495,14 +558,15 @@ export default {
 					this.$notify({
 						title: '通知',
 						message: '销毁成功',
+						type: 'success',
 						offset: 100
 					});
 					this.refresh();
 				}).catch(e => {
-					console.log(e)
+					this.errorNotice(e);
 				})
 			}).catch(e => {
-				console.log(e)
+				this.errorNotice(e);
 			});
 		},
 		deposit() {
@@ -525,48 +589,18 @@ export default {
 						this.$notify({
 							title: '通知',
 							message: '购买成功',
+							type: 'success',
 							offset: 100
 						});
 						this.refresh();
 					}).catch(e => {
-						if(typeof e.code === 'undefined'){
-							this.$message({
-								type: 'info',
-								message: '请先登陆scatter钱包！'
-							}); 
-						} else if(e.code == 402) {
-							this.$message({
-								type: 'info',
-								message: '已取消！'
-							}); 
-						}  
+						this.errorNotice(e);
 					})
 				}).catch(e => {
-					if(e == {}){
-						this.$message({
-							type: 'info',
-							message: '请先登陆scatter钱包！'
-						}); 
-					} else if(e.code == 402) {
-						this.$message({
-							type: 'info',
-							message: '已取消！'
-						}); 
-					}
-					 
+					this.errorNotice(e);
 				});
 			}).catch(() => {
-				if(typeof e.code === 'undefined'){
-					this.$message({
-						type: 'info',
-						message: '请先登陆scatter钱包！'
-					}); 
-				} else if(e.code == 402) {
-					this.$message({
-						type: 'info',
-						message: '已取消！'
-					}); 
-				}            
+				this.errorNotice(e);
 			});
 		},
 		invite() {
@@ -583,35 +617,15 @@ export default {
 					this.$notify({
 						title: '通知',
 						message: '邀请成功',
+						type: 'success',
 						offset: 100
 					});
 					this.refresh();
 				}).catch(e => {
-					if(typeof e.code === 'undefined'){
-						this.$message({
-							type: 'info',
-							message: '请先登陆scatter钱包！'
-						}); 
-					} else if(e.code == 402) {
-						this.$message({
-							type: 'info',
-							message: '已取消！'
-						}); 
-					}  
+					this.errorNotice(e);
 				})
 			}).catch(e => {
-				if(e == {}){
-					this.$message({
-						type: 'info',
-						message: '请先登陆scatter钱包！'
-					}); 
-				} else if(e.code == 402) {
-					this.$message({
-						type: 'info',
-						message: '已取消！'
-					}); 
-				}
-					
+				this.errorNotice(e);
 			});
 		},
 		stake() {
@@ -629,14 +643,15 @@ export default {
 					this.$notify({
 						title: '通知',
 						message: '抵押成功',
+						type: 'success',
 						offset: 100
 					});
 					this.refresh();
 				}).catch(e => {
-					console.log(e)
+					this.errorNotice(e);
 				})
 			}).catch(e => {
-				console.log(e)
+				this.errorNotice(e);
 			});
 		},
 		unstake() {
@@ -654,14 +669,15 @@ export default {
 					this.$notify({
 						title: '通知',
 						message: '已取消抵押',
+						type: 'success',
 						offset: 100
 					});
 					this.refresh();
 				}).catch(e => {
-					console.log(e)
+					this.errorNotice(e);
 				})
 			}).catch(e => {
-				console.log(e)
+				this.errorNotice(e);
 			});
 		},
 		collect_fee() {
@@ -679,14 +695,15 @@ export default {
 					this.$notify({
 						title: '通知',
 						message: '领取成功',
+						type: 'success',
 						offset: 100
 					});
 					this.refresh();
 				}).catch(e => {
-					console.log(e)
+					this.errorNotice(e);
 				})
 			}).catch(e => {
-				console.log(e)
+				this.errorNotice(e);
 			});
 		},
 		collect_reward() {
@@ -704,14 +721,15 @@ export default {
 					this.$notify({
 						title: '通知',
 						message: '领取成功',
+						type: 'success',
 						offset: 100
 					});
 					this.refresh();
 				}).catch(e => {
-					console.log(e)
+					this.errorNotice(e);
 				})
 			}).catch(e => {
-				console.log(e)
+				this.errorNotice(e);
 			});
 		},
 		handleClick(tab, event) {
@@ -721,7 +739,6 @@ export default {
 	},
 
 	mounted(){
-		this.getGame();
 		this.intervalRefresh();
 	},
 
