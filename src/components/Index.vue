@@ -53,7 +53,7 @@
 		<div class="be-content">
 			<div class="main-content container-fluid">
 				<div class="row">
-					<div class="col-12 col-lg-6 col-xl-6">
+					<div class="col-12 col-lg-6 col-xl-6 in_raw">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<div slot="header" class="clearfix">
 								<span>合约: {{this.config.gameContract}}</span>
@@ -68,7 +68,7 @@
 							头玩奖励时间：{{ game.reward_time > 0 ? new Date(game.reward_time * 1000).toLocaleString():0 }}
 						</el-card>
 					</div>
-					<div class="col-12 col-lg-6 col-xl-6">
+					<div class="col-12 col-lg-6 col-xl-6 in_raw">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<div slot="header" class="clearfix">
 								<span>用户：{{ account.name }}</span>
@@ -87,7 +87,7 @@
 				</div>
 				<br>
 				<div class="row">
-					<div class="col-12 col-lg-6 col-xl-6">
+					<div class="col-12 col-lg-6 col-xl-6 in_raw">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<el-tabs v-model="tabActive1" @tab-click="handleClick">
 								<el-tab-pane label="购买" name="first" 
@@ -124,7 +124,7 @@
 							</el-tabs>
 						</el-card>
 					</div>
-					<div class="col-12 col-lg-6 col-xl-6">
+					<div class="col-12 col-lg-6 col-xl-6 in_raw">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<el-tabs v-model="tabActive2" @tab-click="handleClick"
 							v-loading="loading2"
@@ -174,6 +174,7 @@
 
 import EOS from 'eosjs';
 import tp from 'tp-eosjs';
+import _tp from 'tp-enujs';
 import config from '../config/config.js'
 
 export default {
@@ -256,17 +257,28 @@ export default {
 		this.eosClient = EOS(this.config.options);
 		if(tp.isConnected()){
 			tp.getCurrentWallet().then(data => {
-				this.$message({
-					message: 'TP链接成功！',
-					type: 'warning'
-				});
-				if(data.result == true){
-					this.account = data.data.wallet;
-					if(this.account.blockchain_id == 5 && this.config.env === 'eos'){
-						this.setENV('enu');
-					} else if(this.account.blockchain_id == 4 && this.config.env === 'enu'){
-						this.setENV('eos');
-					} else if(this.account.blockchain_id == 5 || this.account.blockchain_id == 5) {
+				if(data.result){
+					this.$message({
+						message: '获取TP钱包信息！',
+						type: 'warning'
+					});
+					this.account = data.data;
+					if(this.account.blockchain_id == 5 && this.config.env !== 'enu'){
+						this.$message({
+							message: '钱包和网络不一致，请切换到ENU主网或者切换到EOS钱包！',
+							type: 'warning'
+						});
+					} else if(this.account.blockchain_id == 4 && this.config.env !== 'eos'){
+						this.$message({
+							message: '钱包和网络不一致，请切换到EOS主网或者切换到ENU钱包！',
+							type: 'warning'
+						});
+					} else if(this.config.env === 'dev'){
+						this.$message({
+							message: '当前在测试网环境！',
+							type: 'warning'
+						});
+					} else if(this.account.blockchain_id == 4 || this.account.blockchain_id == 5){
 						this.$message({
 							message: '用户：' + this.account.name + '登陆成功！',
 							type: 'success'
@@ -278,12 +290,15 @@ export default {
 						this.getUser();
 					} else {
 						this.$message({
-							message: '请切换EOS或者ENU账户！',
+							message: '请切换到EOS或ENU钱包！',
 							type: 'warning'
 						});
 					}
 				}
 			})
+			if(this.config.env === 'enu'){
+				tp.eosTokenTransfer = _tp.enuTokenTransfer;
+			}
 		} else {
 			var clientLoaded = this.config.network.blockchain === 'eos'? 'scatterLoaded':'ironmanLoaded';
 			document.addEventListener(clientLoaded, scatterExtension => {
@@ -322,17 +337,25 @@ export default {
 		login() {
 			if(tp.isConnected()){
 				tp.getCurrentWallet().then(data => {
-					this.$message({
-						message: 'TP链接成功！',
-						type: 'warning'
-					});
-					if(data.result == true){
-						this.account = data.data.wallet;
-						if(this.account.blockchain_id == 5 && this.config.env === 'eos'){
-							this.setENV('enu');
-						} else if(this.account.blockchain_id == 4 && this.config.env === 'enu'){
-							this.setENV('eos');
-						} else if(this.account.blockchain_id == 5 || this.account.blockchain_id == 5) {
+					if(data.result){
+						this.$message({
+							message: '获取TP钱包信息！',
+							type: 'warning'
+						});
+						this.account = data.data;
+						if(this.account.blockchain_id == 5 && this.config.env !== 'enu'){
+							this.$message({
+								message: '正在切换到ENU网络！',
+								type: 'success'
+							});
+							this.switchNet('enu')
+						} else if(this.account.blockchain_id == 4 && this.config.env !== 'eos'){
+							this.$message({
+								message: '正在切换EOS网络！',
+								type: 'success'
+							});
+							this.switchNet('eos')
+						} else if(this.account.blockchain_id == 4 || this.account.blockchain_id == 5){
 							this.$message({
 								message: '用户：' + this.account.name + '登陆成功！',
 								type: 'success'
@@ -350,6 +373,9 @@ export default {
 						}
 					}
 				})
+				if(this.config.env === 'enu'){
+					tp.eosTokenTransfer = _tp.enuTokenTransfer;
+				}
 			} else{
 				if(this.config.network.blockchain === 'eos' && typeof window.scatter === 'undefined'){
 					this.$message({
@@ -383,14 +409,16 @@ export default {
 		},
 		logout() {
 			try{
-				scatter.forgetIdentity().then(() => {
-					this.$message({
-							message: '用户：' + this.account.name + '已经注销！',
-							type: 'warning'
+				if(!tp.isConnected()){
+					scatter.forgetIdentity().then(() => {
+						this.$message({
+								message: '用户：' + this.account.name + '已经注销！',
+								type: 'warning'
+						});
+						this.userName = '用户';
+						this.ivtUrl = "http://eosplayer.one/?ref=playeronefee";
 					});
-					this.userName = '用户';
-					this.ivtUrl = "http://eosplayer.one/?ref=playeronefee";
-				});
+				}
 			} catch(e){
 				this.errorNotice(e);
 			}
@@ -545,30 +573,53 @@ export default {
 			});
 		},
 		leaseCPU() {
-			const requiredFields = {
-				accounts: [this.config.network]
-			}
-			// hard code
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = parseFloat(0.1).toFixed(4) + ' ' + this.config.mainToken;
+			var amount = parseFloat(0.1).toFixed(4);
 			var memo = '1d';
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '租用成功',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.mainToken,
+					precision: 4,
+					contract: this.config.tokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '购买成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				amount += ' ' + this.config.mainToken;
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '租用成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
 				}).catch(e => {
 					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
+				});
+			}
 		},
 		errorNotice(e){
 			if(typeof e !== 'object'){
@@ -592,7 +643,7 @@ export default {
 		buy() {
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = parseFloat(this.buyAmount).toFixed(4) + ' ' + this.config.mainToken;
+			var amount = parseFloat(this.buyAmount).toFixed(4);
 			var memo = this.refer;
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -619,6 +670,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount += ' ' + this.config.mainToken;
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -640,7 +692,7 @@ export default {
 		sell() {
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = parseFloat(this.sellAmount).toFixed(4) + ' ' + this.config.gameToken; 
+			var amount = parseFloat(this.sellAmount).toFixed(4); 
 			var memo = this.refer;
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -667,6 +719,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount += ' ' + this.config.gameToken;
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -689,7 +742,7 @@ export default {
 		burn() {
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = parseFloat(this.burnAmount).toFixed(4) + ' ' + this.config.gameToken; 
+			var amount = parseFloat(this.burnAmount).toFixed(4); 
 			var memo = "burn";
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -716,6 +769,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount += ' ' + this.config.gameToken; 
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -742,7 +796,7 @@ export default {
 			}); 
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = parseFloat(this.depositAmount).toFixed(4) + ' ' + this.config.mainToken;
+			var amount = parseFloat(this.depositAmount).toFixed(4);
 			var memo = "deposit";
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -769,6 +823,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount  += ' ' + this.config.mainToken;
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -790,7 +845,7 @@ export default {
 		invite() {
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = parseFloat(0.0001).toFixed(4) + ' ' + this.config.mainToken;
+			var amount = parseFloat(0.0001).toFixed(4);
 			var memo = this.invitation;
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -817,6 +872,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount  += ' ' + this.config.mainToken;
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -838,7 +894,7 @@ export default {
 		stake() {
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = parseFloat(this.stakeAmount).toFixed(4) + ' ' + this.config.gameToken; 
+			var amount = parseFloat(this.stakeAmount).toFixed(4); 
 			var memo = "stake";
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -865,6 +921,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount  += ' ' + this.config.gameToken;
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -886,7 +943,7 @@ export default {
 		unstake() {
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = "0.0003 " + this.config.mainToken;
+			var amount = "0.0003";
 			var memo = "通过向合约转账0.0003" + this.config.mainToken + "解除抵押";
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -913,6 +970,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount += ' ' + this.config.mainToken;
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -934,7 +992,7 @@ export default {
 		collect_fee() {
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = "0.0001 " + this.config.mainToken;
+			var amount = "0.0001";
 			var memo = "通过向合约转账0.0001" + this.config.mainToken +"领取邀请人奖励";
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -961,6 +1019,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount += ' ' + this.config.mainToken;
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -982,7 +1041,7 @@ export default {
 		collect_reward() {
 			var from = this.account.name;
 			var to = this.config.gameContract;
-			var amount = "0.0002 " + this.config.mainToken;
+			var amount = "0.0002";
 			var memo = "通过向合约转账0.0002" + this.config.mainToken +"领取头号奖励";
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
@@ -1009,6 +1068,7 @@ export default {
 				const requiredFields = {
 					accounts: [this.config.network]
 				}
+				amount += ' ' +this.config.mainToken;
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -1076,6 +1136,11 @@ body > .el-container {
 #banner img{
 	width: 100%;
 	height: 100%;
+}
+
+.in_raw {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 h3 {
