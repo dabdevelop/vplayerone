@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "deploy": "scp -i ~/.ssh/google_compute_engine -r dist/* ft_nudt@107.178.221.188:eosplay/"
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",

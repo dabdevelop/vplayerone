@@ -3,7 +3,7 @@
 		<!-- 头号玩家合约安全规则说明路线图代码开源免责说明 -->
 		<b-navbar toggleable="md" type="light" variant="light">
 			<b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
-			<b-navbar-brand href="#">EOS头号玩家</b-navbar-brand>
+			<b-navbar-brand href="#">{{config.mainToken}}头号玩家</b-navbar-brand>
 			<b-collapse is-nav id="nav_collapse">
 				<b-navbar-nav>
 					<b-nav-item href="https://github.com/dabdevelop/playerone/blob/master/playerone/playerone.cpp" target="_blank_">合约开源</b-nav-item>
@@ -11,13 +11,13 @@
 				<!-- Right aligned nav items -->
 				<b-navbar-nav class="ml-auto">
 					<b-nav-form>
-						<b-form-input size="sm" class="mr-sm-2" type="text" placeholder="EOS用户名" v-model="ivtUrl" id="ivtUrl"/>
+						<b-form-input size="sm" class="mr-sm-2" type="text" v-model="ivtUrl" id="ivtUrl"/>
 						<b-button size="sm" variant="outline-success" class="my-2 my-sm-0" @click.prevent="copyLink">复制邀请链接</b-button>
 					</b-nav-form>
 					<b-nav-item-dropdown v-bind:text="config.networkName" right>
-						<b-dropdown-item @click.prevent="switchNet('eos')">EOS主网</b-dropdown-item>
-						<b-dropdown-item @click.prevent="switchNet('enu')">ENU主网</b-dropdown-item>
-						<b-dropdown-item @click.prevent="switchNet('dev')">测试网</b-dropdown-item>
+						<b-dropdown-item @click.prevent="switchNet('eos')" v-bind:disabled="config.env === 'eos'">EOS主网</b-dropdown-item>
+						<b-dropdown-item @click.prevent="switchNet('enu')" v-bind:disabled="config.env === 'enu'">ENU主网</b-dropdown-item>
+						<b-dropdown-item @click.prevent="switchNet('dev')" v-bind:disabled="config.env === 'dev'">测试网</b-dropdown-item>
 					</b-nav-item-dropdown>
 					<b-nav-item-dropdown right>
 						<!-- Using button-content slot -->
@@ -58,30 +58,30 @@
 							<div slot="header" class="clearfix">
 								<span>合约: {{this.config.gameContract}}</span>
 							</div>
-							CGT发行量(200万):<el-progress :percentage="progress" color="#8e71c7"></el-progress>
+							{{config.gameToken}}发行量(200万):<el-progress :percentage="progress" color="#8e71c7"></el-progress>
 							<!-- <el-progress :text-inside="true" :stroke-width="18" :percentage="progress"></el-progress> -->
-							开始时间：{{ new Date(game.start_time * 1000).toLocaleString() }}<br>
-							Pool：{{pool + ' EOS'}}<br>
-							头号：{{game.player_one}}<br>
-							头号奖励：{{game.reward}}<br>
-							头号抵押：{{game.staked}}<br>
-							头号奖励时间：{{ new Date(game.reward_time * 1000).toLocaleString() }}
+							开始时间：{{ game.start_time > 0 ? new Date(game.start_time * 1000).toLocaleString():0 }}<br>
+							Pool：{{pool + ' ' + config.mainToken}}<br>
+							头号玩家：{{game.player_one}}<br>
+							头玩奖励：{{game.reward}}<br>
+							头玩抵押：{{game.staked}}<br>
+							头玩奖励时间：{{ game.reward_time > 0 ? new Date(game.reward_time * 1000).toLocaleString():0 }}
 						</el-card>
 					</div>
 					<div class="col-12 col-lg-6 col-xl-6">
 						<el-card :body-style="{ padding: '10px' }" shadow="hover">
 							<div slot="header" class="clearfix">
-								<span>用户：{{user.name}}</span>
+								<span>用户：{{ account.name }}</span>
 							</div>
-							EOS余额：{{user.eosBalance}} <br>
-							CGT余额：{{user.tokenBalance}} <br>
+							{{config.mainToken}}余额：{{user.eosBalance}} <br>
+							{{config.gameToken}}余额：{{user.tokenBalance}} <br>
 							邀请奖励：{{user.reward}} <br>
 							邀请码：{{user.refer}} <br>
 							邀请次数：{{user.invitation}} <br>
-							上次操作时间：{{ new Date(user.last_action * 1000).toLocaleString() }}<br>
+							上次操作时间：{{ user.last_action > 0 ?new Date(user.last_action * 1000).toLocaleString() : 0 }}<br>
 							<el-button @click.prevent="login" type="success">登陆</el-button>
 							<el-button @click.prevent="copyLink" type="success">分享</el-button>
-							<el-button @click.prevent="leaseCPU" type="success">租赁CPU</el-button>
+							<el-button @click.prevent="leaseCPU" type="success" v-bind:disabled="config.env!=='eos'">租赁CPU</el-button>
 						</el-card>
 					</div>
 				</div>
@@ -94,7 +94,7 @@
 								v-loading="loading"
 								v-bind:element-loading-text="coolingMsg"
     							element-loading-spinner="el-icon-loading">
-									<p>请输入EOS数量 {{ price + ' EOS/CGT' }}</p> 
+									<p>请输入{{config.mainToken}}数量 {{ price + ' '+ config.mainToken +'/' + config.gameToken }}</p> 
 									<el-input-number v-model="buyAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="buy" type="primary">购买</el-button>
@@ -103,7 +103,7 @@
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="购买邀请码" name="second">
-									<p>请输入EOS数量 1EOS/邀请码</p> 
+									<p>请输入{{config.mainToken}}数量 1{{config.mainToken}}/邀请码</p> 
 									<el-input-number v-model="depositAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled>购买</el-button>
@@ -112,8 +112,8 @@
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="邀请朋友" name="third">
-									<p>请输入EOS账号</p>
-									<el-input v-model="invitation" placeholder="EOS账号"></el-input>
+									<p>请输入{{config.mainToken}}账号</p>
+									<el-input v-model="invitation" v-bind:placeholder="config.mainToken + '账号'"></el-input>
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="deposit" type="info" disabled>购买</el-button>
@@ -131,7 +131,7 @@
 							v-bind:element-loading-text="coolingMsg2"
 							element-loading-spinner="el-icon-loading">
 								<el-tab-pane label="出售" name="first">
-									<p>请输入CGT数量 {{price + ' EOS/CGT' }}</p>
+									<p>请输入{{config.gameToken}}数量 {{price + ' ' + config.mainToken + '/' + config.gameToken }}</p>
 									<el-input-number v-model="sellAmount" @change="handleChange" :min="0" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="sell" type="danger" >出售</el-button>
@@ -140,7 +140,7 @@
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="退出" name="second">
-									<p>请输入CGT数量 {{ burnPrice + ' EOS/CGT'}} </p> 
+									<p>请输入{{config.gameToken}}数量 {{ burnPrice + ' ' + config.mainToken + '/' + config.gameToken}} </p> 
 									<el-input-number v-model="burnAmount" @change="handleChange" :min="0" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="sell" type="info" disabled>出售</el-button>
@@ -149,7 +149,7 @@
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="抵押" name="third">
-									<p>请输入CGT数量</p>
+									<p>请输入{{config.gameToken}}数量</p>
 									<el-input-number v-model="stakeAmount" @change="handleChange" :min="1000" :max="1000000" :step="1000" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="sell" type="info" disabled>出售</el-button>
@@ -173,6 +173,7 @@
 <script>
 
 import EOS from 'eosjs';
+import tp from 'tp-eosjs';
 import config from '../config/config.js'
 
 export default {
@@ -186,6 +187,7 @@ export default {
 			eosClient: null,
 			// 用来创建签名。转账、买、卖、退出都需要用这个
 			scatterEosClient: null	,
+			tpEosClient: null	,
 			tabActive1: 'first',
 			tabActive2: 'first',
 			buyAmount: 0,
@@ -216,7 +218,7 @@ export default {
 				balance: "0.0000 CGT",
 				circulation: "0.0000 CGT",
 				burn: "0.0000 CGT",
-				staked: "0.0000 CGT",
+				staked: "0 CGT",
 				fee: "0.0000 EOS",
 				reward: "0.0000 EOS",
 				next_refer: "",
@@ -242,56 +244,141 @@ export default {
 	created(){
 		var env = localStorage.getItem('env') != undefined ? localStorage.getItem('env') : 'dev';
 		this.config = config.setENV(env);
-		this.eosClient = EOS(this.config.eosOptions);
-		document.addEventListener('scatterLoaded', scatterExtension => {
-			this.scatter = window.scatter;
-			this.scatter.requireVersion(3.0);
-			this.scatterEosClient = this.scatter.eos(this.config.eosNetwork, EOS, this.config.eosOptions, "http");
-			this.scatter.getIdentity({
-				accounts: [this.config.eosNetwork]
-			}).then(identity => {
-				if (identity && identity.accounts.length > 0) {
-					this.account = identity.accounts.find(account => account.blockchain === 'eos');
-					this.$message({
-						message: '用户：' + this.account.name + '登陆成功！',
-						type: 'success'
-					});
-					this.userName = this.account.name;
-					this.ivtUrl = "http://eosplayer.one/?ref=" + this.account.name;
-					if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
-					this.refer = this.$route.query.ref;
-					this.getUser();
-				}
-			}).catch(error => {
-				this.errorNotice(error);
+		if(this.config.env === 'dev'){
+			this.$notify({
+				title: '提示',
+				message: '您正在使用EOS本地测试网，请运行测试网，并部署合约。',
+				duration: 0,
+				type: 'warning',
+				offset: 100
 			});
-		})
-	},
-
-	methods: {
-		login() {
-			if(window.scatter == null){
+		}
+		this.eosClient = EOS(this.config.options);
+		if(tp.isConnected()){
+			tp.getCurrentWallet().then(data => {
 				this.$message({
-						message: '请先安装scatter钱包！',
-						type: 'warning'
+					message: 'TP链接成功！',
+					type: 'warning'
 				});
-			} else {
-				this.scatter.getIdentity({
-					accounts: [this.config.eosNetwork]
-				}).then(identity => {
-					if (identity && identity.accounts.length > 0) {
-						this.account = identity.accounts.find(account => account.blockchain === 'eos');
+				if(data.result == true){
+					this.account = data.data.wallet;
+					if(this.account.blockchain_id == 5 && this.config.env === 'eos'){
+						this.setENV('enu');
+					} else if(this.account.blockchain_id == 4 && this.config.env === 'enu'){
+						this.setENV('eos');
+					} else if(this.account.blockchain_id == 5 || this.account.blockchain_id == 5) {
 						this.$message({
 							message: '用户：' + this.account.name + '登陆成功！',
 							type: 'success'
 						});
 						this.userName = this.account.name;
 						this.ivtUrl = "http://eosplayer.one/?ref=" + this.account.name;
+						if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
+						this.refer = this.$route.query.ref;
+						this.getUser();
+					} else {
+						this.$message({
+							message: '请切换EOS或者ENU账户！',
+							type: 'warning'
+						});
+					}
+				}
+			})
+		} else {
+			var clientLoaded = this.config.network.blockchain === 'eos'? 'scatterLoaded':'ironmanLoaded';
+			document.addEventListener(clientLoaded, scatterExtension => {
+				if(this.config.network.blockchain === 'enu'){
+					this.scatter = window.ironman;
+					this.scatter.requireVersion(1.1);
+					this.scatterEosClient = this.scatter.enu(this.config.network, EOS, this.config.options, "http");
+				} else if(this.config.network.blockchain === 'eos'){
+					this.scatter = window.scatter;
+					this.scatter.requireVersion(3.0);
+					this.scatterEosClient = this.scatter.eos(this.config.network, EOS, this.config.options, "http");
+				}
+				this.scatter.getIdentity({
+					accounts: [this.config.network]
+				}).then(identity => {
+					if (identity && identity.accounts.length > 0) {
+						this.account = identity.accounts.find(account => account.blockchain === this.config.network.blockchain);
+						this.$message({
+							message: '用户：' + this.account.name + '登陆成功！',
+							type: 'success'
+						});
+						this.userName = this.account.name;
+						this.ivtUrl = "http://eosplayer.one/?ref=" + this.account.name;
+						if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
+						this.refer = this.$route.query.ref;
 						this.getUser();
 					}
 				}).catch(error => {
 					this.errorNotice(error);
 				});
+			})
+		}
+	},
+
+	methods: {
+		login() {
+			if(tp.isConnected()){
+				tp.getCurrentWallet().then(data => {
+					this.$message({
+						message: 'TP链接成功！',
+						type: 'warning'
+					});
+					if(data.result == true){
+						this.account = data.data.wallet;
+						if(this.account.blockchain_id == 5 && this.config.env === 'eos'){
+							this.setENV('enu');
+						} else if(this.account.blockchain_id == 4 && this.config.env === 'enu'){
+							this.setENV('eos');
+						} else if(this.account.blockchain_id == 5 || this.account.blockchain_id == 5) {
+							this.$message({
+								message: '用户：' + this.account.name + '登陆成功！',
+								type: 'success'
+							});
+							this.userName = this.account.name;
+							this.ivtUrl = "http://eosplayer.one/?ref=" + this.account.name;
+							if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
+							this.refer = this.$route.query.ref;
+							this.getUser();
+						} else {
+							this.$message({
+								message: '请切换EOS或者ENU账户！',
+								type: 'warning'
+							});
+						}
+					}
+				})
+			} else{
+				if(this.config.network.blockchain === 'eos' && typeof window.scatter === 'undefined'){
+					this.$message({
+						message: '请使用Chrome浏览器并安装scatter钱包，或者在TokenPocket环境下使用！',
+						type: 'warning'
+					});
+				} else if(this.config.network.blockchain === 'enu' && typeof window.ironman === 'undefined'){
+					this.$message({
+						message: '请使用Chrome浏览器并安装ironman钱包，或者在TokenPocket环境下使用',
+						type: 'warning'
+					});
+				} else {
+					this.scatter.getIdentity({
+						accounts: [this.config.network]
+					}).then(identity => {
+						if (identity && identity.accounts.length > 0) {
+							this.account = identity.accounts.find(account => account.blockchain === this.config.network.blockchain);
+							this.$message({
+								message: '用户：' + this.account.name + '登陆成功！',
+								type: 'success'
+							});
+							this.userName = this.account.name;
+							this.ivtUrl = "http://eosplayer.one/?ref=" + this.account.name;
+							this.getUser();
+						}
+					}).catch(error => {
+						this.errorNotice(error);
+					});
+				}
 			}
 		},
 		logout() {
@@ -359,7 +446,6 @@ export default {
 			}).then(res => {
 				this.user['tokenBalance'] = res[0];
 			}, res => {
-				console.log(res);
 			})
 
 			this.eosClient.getCurrencyBalance({
@@ -369,7 +455,6 @@ export default {
 			}).then(res => {
 				this.user['eosBalance'] = res[0];
 			}, res => {
-				console.log(res);
 			})
 		},
 		getActions() {
@@ -405,21 +490,22 @@ export default {
 			this.getGame();
 			this.getUser();
 			this.getActions();
+			var coolTime = 0;
 			if(this.game.start_time > Date.now() / 1000){
 				this.loading = (this.game.start_time > Date.now() / 1000);
-				var coolTime = this.game.start_time > Date.now() / 1000 ? (this.game.start_time - Date.now() / 1000).toFixed(0) : 0;
+				coolTime = this.game.start_time > Date.now() / 1000 ? (this.game.start_time - Date.now() / 1000).toFixed(0) : 0;
 				this.coolingMsg = '游戏开始倒计时 ' + coolTime + ' s';
 			} else {
 				this.loading = (this.user.last_action > Date.now() / 1000);
-				var coolTime = this.user.last_action > Date.now() / 1000 ? (this.user.last_action - Date.now() / 1000).toFixed(0) : 0;
+				coolTime = this.user.last_action > Date.now() / 1000 ? (this.user.last_action - Date.now() / 1000).toFixed(0) : 0;
 				this.coolingMsg = '正在冷却中 ' + coolTime + ' s';
 			}
 			
 			this.loading2 = (this.game.start_time + 60 * 60 ) > Date.now() / 1000;
-			this.coolingMsg2 = '预售结束前不能卖出、退出、抵押CGT';
+			this.coolingMsg2 = '预售结束前不能卖出、退出、抵押' + this.config.gameToken;
 			this.price = (parseFloat(this.game.reserve.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(this.game.circulation.split(' ')[0]) - 1000000)/ 250000)) * 0.9 + 0.05))).toFixed(4);
 			this.burnPrice = (parseFloat(this.game.insure.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]))).toFixed(4);
-			this.pool = (parseFloat(this.game.reserve.split(' ')[0]) + parseFloat(this.game.insure.split(' ')[0]) + parseFloat(this.game.fee.split(' ')[0]) + parseFloat(this.game.reward.split(' ')[0])).toFixed(0);
+			this.pool = (parseFloat(this.game.reserve.split(' ')[0]) + parseFloat(this.game.insure.split(' ')[0]) + parseFloat(this.game.fee.split(' ')[0]) + parseFloat(this.game.reward.split(' ')[0])).toFixed(4);
 			this.progress = parseInt((parseFloat(this.game.supply.split(' ')[0]) / parseFloat(this.game.max_supply.split(' ')[0]) * 500).toFixed(0));
 		},
 		intervalRefresh(){
@@ -460,7 +546,7 @@ export default {
 		},
 		leaseCPU() {
 			const requiredFields = {
-				accounts: [this.config.eosNetwork]
+				accounts: [this.config.network]
 			}
 			// hard code
 			var from = this.account.name;
@@ -504,98 +590,35 @@ export default {
 			console.log(e);
 		},
 		buy() {
-			const requiredFields = {
-				accounts: [this.config.eosNetwork]
-			}
-			// hard code
 			var from = this.account.name;
 			var to = this.config.gameContract;
 			var amount = parseFloat(this.buyAmount).toFixed(4) + ' ' + this.config.mainToken;
 			var memo = this.refer;
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '购买成功',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
-				}).catch(e => {
-					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
-		},
-		sell() {
-			const requiredFields = {
-				accounts: [this.config.eosNetwork]
-			}
-			// hard code
-			var from = this.account.name;
-			var to = this.config.gameContract;
-			var amount = parseFloat(this.sellAmount).toFixed(4) + ' ' + this.config.gameToken; 
-			var memo = this.refer;
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '出售成功',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
-				}).catch(e => {
-					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
-		},
-		// 退出操作
-		burn() {
-			const requiredFields = {
-				accounts: [this.config.eosNetwork]
-			}
-			// hard code
-			var from = this.account.name;
-			var to = this.config.gameContract;
-			var amount = parseFloat(this.burnAmount).toFixed(4) + ' ' + this.config.gameToken; 
-			var memo = "burn";
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '退出成功',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
-				}).catch(e => {
-					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
-		},
-		deposit() {
-			this.$confirm('购买邀请码花费的EOS是不可退回的，是否购买?', '提示', {
-				confirmButtonText: '确定',
-				cancelButtonText: '取消',
-				type: 'warning'
-			}).then(() => {
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.mainToken,
+					precision: 4,
+					contract: this.config.tokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '购买成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
 				const requiredFields = {
-					accounts: [this.config.eosNetwork]
+					accounts: [this.config.network]
 				}
-				// hard code
-				var from = this.account.name;
-				var to = this.config.gameContract;
-				var amount = parseFloat(this.depositAmount).toFixed(4) + ' ' + this.config.mainToken;
-				var memo = "deposit";
 				var arg = [from, to, amount, memo]
 				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
 					contract.transfer(...arg).then(tx => {
@@ -612,138 +635,397 @@ export default {
 				}).catch(e => {
 					this.errorNotice(e);
 				});
-			}).catch(() => {
-				this.errorNotice(e);
-			});
+			}
+		},
+		sell() {
+			var from = this.account.name;
+			var to = this.config.gameContract;
+			var amount = parseFloat(this.sellAmount).toFixed(4) + ' ' + this.config.gameToken; 
+			var memo = this.refer;
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.gameToken,
+					precision: 4,
+					contract: this.config.gameTokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '出售成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '出售成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
+				}).catch(e => {
+					this.errorNotice(e);
+				});
+			}
+		},
+		// 退出操作
+		burn() {
+			var from = this.account.name;
+			var to = this.config.gameContract;
+			var amount = parseFloat(this.burnAmount).toFixed(4) + ' ' + this.config.gameToken; 
+			var memo = "burn";
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.gameToken,
+					precision: 4,
+					contract: this.config.gameTokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '退出成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '退出成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
+				}).catch(e => {
+					this.errorNotice(e);
+				});
+			}
+		},
+		deposit() {
+			var message = '购买邀请码花费的' + this.config.mainToken + '是不可退回的，请确认操作！';
+			this.$message({
+				type: 'warning',
+				message: message
+			}); 
+			var from = this.account.name;
+			var to = this.config.gameContract;
+			var amount = parseFloat(this.depositAmount).toFixed(4) + ' ' + this.config.mainToken;
+			var memo = "deposit";
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.mainToken,
+					precision: 4,
+					contract: this.config.tokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '购买成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '购买成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
+				}).catch(e => {
+					this.errorNotice(e);
+				});
+			}
 		},
 		invite() {
-			const requiredFields = {
-				accounts: [this.config.eosNetwork]
-			}
 			var from = this.account.name;
 			var to = this.config.gameContract;
 			var amount = parseFloat(0.0001).toFixed(4) + ' ' + this.config.mainToken;
 			var memo = this.invitation;
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '邀请成功',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.mainToken,
+					precision: 4,
+					contract: this.config.tokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '邀请成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '邀请成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
 				}).catch(e => {
 					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
+				});
+			}
 		},
 		stake() {
-			const requiredFields = {
-				accounts: [this.config.eosNetwork]
-			}
-			// hard code
 			var from = this.account.name;
 			var to = this.config.gameContract;
 			var amount = parseFloat(this.stakeAmount).toFixed(4) + ' ' + this.config.gameToken; 
 			var memo = "stake";
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '抵押成功',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.gameToken,
+					precision: 4,
+					contract: this.config.gameTokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '抵押成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.gameTokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '抵押成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
 				}).catch(e => {
 					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
+				});
+			}
 		},
 		unstake() {
-			const requiredFields = {
-				accounts: [this.config.eosNetwork]
-			}
-			// hard code
 			var from = this.account.name;
 			var to = this.config.gameContract;
 			var amount = "0.0003 " + this.config.mainToken;
-			var memo = "通过向合约转账0.0003EOS解除抵押";
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '已取消抵押',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
+			var memo = "通过向合约转账0.0003" + this.config.mainToken + "解除抵押";
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.mainToken,
+					precision: 4,
+					contract: this.config.tokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '已取消抵押',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '已取消抵押',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
 				}).catch(e => {
 					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
+				});
+			}
 		},
 		collect_fee() {
-			const requiredFields = {
-				accounts: [this.config.eosNetwork]
-			}
-			// hard code
 			var from = this.account.name;
 			var to = this.config.gameContract;
 			var amount = "0.0001 " + this.config.mainToken;
-			var memo = "通过向合约转账0.0001EOS领取邀请人奖励";
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '领取成功',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
+			var memo = "通过向合约转账0.0001" + this.config.mainToken +"领取邀请人奖励";
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.mainToken,
+					precision: 4,
+					contract: this.config.tokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '领取成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '领取成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
 				}).catch(e => {
 					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
+				});
+			}
 		},
 		collect_reward() {
-			const requiredFields = {
-				accounts: [this.config.eosNetwork]
-			}
-			// hard code
 			var from = this.account.name;
 			var to = this.config.gameContract;
 			var amount = "0.0002 " + this.config.mainToken;
-			var memo = "通过向合约转账0.0002EOS领取头号奖励";
-			var arg = [from, to, amount, memo]
-			this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
-				contract.transfer(...arg).then(tx => {
-					this.$notify({
-						title: '通知',
-						message: '领取成功',
-						type: 'success',
-						offset: 100
-					});
-					this.refresh();
+			var memo = "通过向合约转账0.0002" + this.config.mainToken +"领取头号奖励";
+			if(tp.isConnected()){
+				tp.eosTokenTransfer({
+					from: from,
+					to: to,
+					amount: amount,
+					tokenName: this.config.mainToken,
+					precision: 4,
+					contract: this.config.tokenContract,
+					memo: memo,
+					address: this.account.address
+				}).then( res => {
+					if(res.result == true){
+						this.$notify({
+							title: '通知',
+							message: '领取成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}
+				});
+			} else {
+				const requiredFields = {
+					accounts: [this.config.network]
+				}
+				var arg = [from, to, amount, memo]
+				this.scatterEosClient.contract(this.config.tokenContract, { requiredFields }).then(contract => {
+					contract.transfer(...arg).then(tx => {
+						this.$notify({
+							title: '通知',
+							message: '领取成功',
+							type: 'success',
+							offset: 100
+						});
+						this.refresh();
+					}).catch(e => {
+						this.errorNotice(e);
+					})
 				}).catch(e => {
 					this.errorNotice(e);
-				})
-			}).catch(e => {
-				this.errorNotice(e);
-			});
+				});
+			}
 		},
 		handleClick(tab, event) {
 		},
