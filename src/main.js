@@ -11,6 +11,7 @@ import router from './router';
 import VueI18n from 'vue-i18n';
 import Vuex from 'vuex';
 
+
 Vue.config.productionTip = false;
 Vue.use(VueI18n);
 Vue.use(Vuex);
