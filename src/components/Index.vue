@@ -549,7 +549,7 @@ export default {
 		copyLink(){
 			var key = document.getElementById("ivtUrl");
 			if (navigator.userAgent.match(/ipad|ipod|iphone/i)) {
-				var el = key.get(0);
+				var el = key;
 				var editable = el.contentEditable;
 				var readOnly = el.readOnly;
 				el.contentEditable = true;
