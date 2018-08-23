@@ -195,6 +195,7 @@ export default {
 	name: 'eosdapp',
 	data() {
 		return {
+			env: '',
 			account: "",
 			block_height: 'block height', 
 			config: config,
@@ -257,9 +258,8 @@ export default {
 		}
 	},
 	created(){
-		this.refer = localStorage.getItem('refer') != undefined ? localStorage.getItem('refer') : 'playeronefee';
-		var env = localStorage.getItem('env') != undefined ? localStorage.getItem('env') : 'dev';
-		this.config = config.setENV(env);
+		this.urlCheck();
+		this.config = config.setENV(this.env);
 		if(this.config.env === 'dev'){
 			this.$notify({
 				title: '提示',
@@ -340,11 +340,7 @@ export default {
 							type: 'success'
 						});
 						this.userName = this.account.name;
-						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name;
-						if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== ''){
-							this.refer = this.$route.query.ref;
-							localStorage.SetItem('refer', this.refer);
-						}
+						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name + '&env=' + this.env;
 						this.getUser();
 					} else {
 						this.$message({
@@ -379,9 +375,7 @@ export default {
 							type: 'success'
 						});
 						this.userName = this.account.name;
-						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name;
-						if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
-						this.refer = this.$route.query.ref;
+						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name + '&env=' + this.env;
 						this.getUser();
 					}
 				}).catch(error => {
@@ -404,6 +398,7 @@ export default {
 
 	methods: {
 		login() {
+			this.urlCheck();
 			if(tp.isConnected()){
 				tp.getCurrentWallet().then(data => {
 					if(data.result){
@@ -430,9 +425,7 @@ export default {
 								type: 'success'
 							});
 							this.userName = this.account.name;
-							this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name;
-							if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
-							this.refer = this.$route.query.ref;
+							this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name + '&env=' + this.env;
 							this.getUser();
 						} else {
 							this.$message({
@@ -457,7 +450,7 @@ export default {
 							type: 'success'
 						});
 						this.userName = this.account.name;
-						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name;
+						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name + '&env=' + this.env;
 						this.getUser();
 					}
 				}).catch(error => {
@@ -474,12 +467,25 @@ export default {
 								type: 'warning'
 						});
 						this.userName = '用户';
-						this.ivtUrl = "http://eosplayer.one/#/?ref=playeronefee";
+						this.ivtUrl = "http://eosplayer.one/#/?ref=playeronefee" + '&env=' + this.env;
 					});
 				}
 			} catch(e){
 				this.errorNotice(e);
 			}
+		},
+		urlCheck(){
+			if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== ''){
+				this.refer = this.$route.query.ref;
+				localStorage.setItem('refer', this.refer);
+			}
+			if(typeof this.$route.query.env !== 'undefined' && this.$route.query.env !== ''){
+				this.env = this.$route.query.env;
+				localStorage.setItem('env', this.env);
+			}
+			this.refer = localStorage.getItem('refer') != undefined ? localStorage.getItem('refer') : 'playeronefee';
+			var env = localStorage.getItem('env') != undefined ? localStorage.getItem('env') : 'enu';
+			this.env = localStorage.getItem('env-overide') != undefined ? localStorage.getItem('env-overide') : env;
 		},
 		clientCheck(){
 			if(this.config.env === 'eos'){
@@ -654,7 +660,7 @@ export default {
 		},
 		switchNet(net){
 			this.logout();
-			localStorage.setItem('env', net);
+			localStorage.setItem('env-overide', net);
 			window.location.reload();
 		},
 		shareLink(){
