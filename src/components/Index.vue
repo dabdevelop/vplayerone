@@ -59,7 +59,7 @@
 							<div slot="header" class="clearfix">
 								<span>合约: {{this.config.gameContract}}</span>
 							</div>
-							{{config.gameToken}}发行量(200万):<el-progress :percentage="progress" color="#8e71c7"></el-progress>
+							{{config.gameToken}}发行量({{parseFloat(this.game.max_supply.split(' ')[0])/100000 * 2}}万):<el-progress :percentage="progress" color="#8e71c7"></el-progress>
 							<!-- <el-progress :text-inside="true" :stroke-width="18" :percentage="progress"></el-progress> -->
 							开始时间：{{ game.start_time > 0 ? new Date(game.start_time * 1000).toLocaleString():0 }}<br>
 							Pool：{{pool + ' ' + config.mainToken}}<br>
@@ -78,10 +78,10 @@
 							{{config.gameToken}}余额：{{user.tokenBalance}} <br>
 							邀请奖励：{{user.reward}} <br>
 							邀请码：{{user.refer}} <br>
-							邀请次数：{{user.invitation}} <br>
+							预售额外额度：{{user.quota}} <br>
 							上次操作时间：{{ user.last_action > 0 ?new Date(user.last_action * 1000).toLocaleString() : 0 }}<br>
 							<el-button @click.prevent="login" type="success">登陆</el-button>
-							<el-button type="success" @click.prevent="copyLink">分享</el-button>
+							<el-button type="success" @click.prevent="shareLink">分享</el-button>
 							<el-button @click.prevent="leaseCPU" type="success" v-bind:disabled="config.env!=='eos'">租赁CPU</el-button>
 						</el-card>
 					</div>
@@ -100,7 +100,7 @@
 									<br><br>
 									<el-button @click.prevent="buy" type="primary">购买</el-button>
 									<el-button @click.prevent="deposit" type="info" disabled>购买</el-button>
-									<el-button @click.prevent="invite" type="info" disabled>邀请朋友</el-button>
+									<el-button @click.prevent="invite" type="info" disabled>邀请</el-button>
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="购买邀请码" name="second">
@@ -109,7 +109,7 @@
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="deposit" type="primary" >购买</el-button>
-									<el-button @click.prevent="invite" type="info" disabled>邀请朋友</el-button>
+									<el-button @click.prevent="invite" type="info" disabled>邀请</el-button>
 									<br>
 								</el-tab-pane>
 								<el-tab-pane label="邀请朋友" name="third">
@@ -118,10 +118,18 @@
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="deposit" type="info" disabled>购买</el-button>
-									<el-button @click.prevent="invite" type="primary" >邀请朋友</el-button>
+									<el-button @click.prevent="invite" type="primary" >邀请</el-button>
 									<br>
 								</el-tab-pane>
-								
+								<el-tab-pane label="说明" name="forth">
+									<p>前2个小时为预售阶段，<b>买入限时限量</b>。</p>
+									<ul>
+										<li><b>限时：</b>每个用户会有<b>平均30秒</b>的冷却时间，连续两次买入间隔越短，下一次冷却时间越长，<b>t = 225 / (dt + 1)</b>，t为冷却时间，<b>dt是冷却后<b style="color: red;">等待</b>的时间</b>。预售结束后冷却时间降为<b>1</b>秒。</li>
+										<li><b>限量：</b>预售阶段用户每次免费额度<b>10{{config.mainToken}}</b>，购买邀请码可以获得额外额度。</li>
+										<li><b>邀请：</b>拥有邀请码的用户可以主动邀请新用户，直接成为他的手续费分红上级，享受其<b>0.5%</b>的交易手续费。预售前每次邀请还能够获得<b>1{{config.mainToken}}</b>额外额度，大于<b>200{{config.mainToken}}</b>后不能通过邀请继续增加。</li>
+									</ul>
+									<p><b>手续费：</b>通过邀请码注册的用户买卖手续费为<b>1.9%</b>，没有通过邀请码注册的用户为<b>2.8%</b>。手续费分配：<b>0.5%</b>给直接上级，<b>0.5%</b>给直接上级的上级，剩下的部分一半进入头号奖池，一半累积到Pool。</p>
+								</el-tab-pane>
 							</el-tabs>
 						</el-card>
 					</div>
@@ -157,6 +165,11 @@
 									<el-button @click.prevent="burn" type="info" disabled>退出</el-button>
 									<el-button @click.prevent="stake" type="danger" >抵押</el-button>
 									<br>
+								</el-tab-pane>
+								<el-tab-pane label="说明" name="forth">
+									<p>预售阶段，<b>不能出售，退出，抵押</b>。</p>
+									<p><b>退出：</b>是用户选择放弃Pool买卖的市场，选择直接从Pool清算，相当于最低保障。</p>
+									<p><b>抵押：</b>抵押最多的用户为头号玩家，<b>每24小时</b>可以分红头号奖池的<b>10%</b>，<b>前提是头号奖池不少于100{{config.mainToken}}</b>，抵押会产生<b>10%</b>的损耗，在解除抵押时扣除（自主解除或者被别人超越）。</p>
 								</el-tab-pane>
 							</el-tabs>
 						</el-card>
@@ -201,7 +214,7 @@ export default {
 			ruleActive: '1',
 			secureActive: '1',
 			userName: '用户',
-			ivtUrl: "http://eosplayer.one/?ref=playeronefee",
+			ivtUrl: "http://eosplayer.one/#/?ref=playeronefee",
 			refer: "playeronefee",
 			loading: false,
 			coolingMsg: '正在冷却中 ',
@@ -219,7 +232,7 @@ export default {
 				gameid: "oneplayerone",
 				reserve: "0.0000 EOS",
 				insure: "0.0000 EOS",
-				max_supply: "10000000.0000 CGT",
+				max_supply: "0.0000 CGT",
 				supply: "0.0000 CGT",
 				balance: "0.0000 CGT",
 				circulation: "0.0000 CGT",
@@ -239,7 +252,7 @@ export default {
 				reward: "0.0000 EOS",
 				last_action: 0,
 				refer: 0,
-				invitation: 0,
+				quota: 0,
 				discount: 0,
 				tokenBalance: 0,
 				eosBalance: 0,
@@ -292,7 +305,7 @@ export default {
 							type: 'success'
 						});
 						this.userName = this.account.name;
-						this.ivtUrl = "http://eosplayer.one/?ref=" + this.account.name;
+						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name;
 						if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
 						this.refer = this.$route.query.ref;
 						this.getUser();
@@ -380,7 +393,7 @@ export default {
 								type: 'success'
 							});
 							this.userName = this.account.name;
-							this.ivtUrl = "http://eosplayer.one/?ref=" + this.account.name;
+							this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name;
 							if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
 							this.refer = this.$route.query.ref;
 							this.getUser();
@@ -407,7 +420,7 @@ export default {
 							type: 'success'
 						});
 						this.userName = this.account.name;
-						this.ivtUrl = "http://eosplayer.one/?ref=" + this.account.name;
+						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name;
 						this.getUser();
 					}
 				}).catch(error => {
@@ -418,13 +431,13 @@ export default {
 		logout() {
 			try{
 				if(!tp.isConnected()){
-					scatter.forgetIdentity().then(() => {
+					this.scatter.forgetIdentity().then(() => {
 						this.$message({
 								message: '用户：' + this.account.name + '已经注销！',
 								type: 'warning'
 						});
 						this.userName = '用户';
-						this.ivtUrl = "http://eosplayer.one/?ref=playeronefee";
+						this.ivtUrl = "http://eosplayer.one/#/?ref=playeronefee";
 					});
 				}
 			} catch(e){
@@ -579,10 +592,10 @@ export default {
 				coolTime = this.user.last_action > Date.now() / 1000 ? (this.user.last_action - Date.now() / 1000).toFixed(0) : 0;
 				this.coolingMsg = '正在冷却中 ' + coolTime + ' s';
 			}
-			
+			coolTime = (this.game.start_time + 60 * 60 ) > Date.now() / 1000 ? (this.game.start_time + 60 * 60 ) - Date.now() / 1000 : 0;
 			this.loading2 = (this.game.start_time + 60 * 60 ) > Date.now() / 1000;
-			this.coolingMsg2 = '预售结束前不能卖出、退出、抵押' + this.config.gameToken;
-			this.price = (parseFloat(this.game.reserve.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(this.game.circulation.split(' ')[0]) - 1000000)/ 250000)) * 0.9 + 0.05))).toFixed(4);
+			this.coolingMsg2 = '预售结束前不能出售、退出、抵押' + this.config.gameToken + ' 剩余 ' + coolTime.toFixed(0) + ' s';
+			this.price = (parseFloat(this.game.reserve.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(this.game.circulation.split(' ')[0]) - parseFloat(this.game.max_supply.split(' ')[0]) / 10) / (parseFloat(this.game.max_supply.split(' ')[0]) / 4))) * 0.9 + 0.05))).toFixed(4);
 			this.burnPrice = (parseFloat(this.game.insure.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]))).toFixed(4);
 			this.pool = (parseFloat(this.game.reserve.split(' ')[0]) + parseFloat(this.game.insure.split(' ')[0]) + parseFloat(this.game.fee.split(' ')[0]) + parseFloat(this.game.reward.split(' ')[0])).toFixed(4);
 			this.progress = parseInt((parseFloat(this.game.supply.split(' ')[0]) / parseFloat(this.game.max_supply.split(' ')[0]) * 500).toFixed(0));
@@ -597,7 +610,7 @@ export default {
 			localStorage.setItem('env', net);
 			window.location.reload();
 		},
-		copyLink(){
+		shareLink(){
 			if(tp.isConnected()){
 				tp.shareNewsToSNS({
 					title: this.config.mainToken + '头号玩家',
@@ -606,31 +619,34 @@ export default {
 					previewImage: 'https://www.mytokenpocket.vip/images/index/logo.png'
 				})
 			} else {
-				var key = document.getElementById("ivtUrl");
-				if (navigator.userAgent.match(/ipad|ipod|iphone/i)) {
-					var el = key;
-					var editable = el.contentEditable;
-					var readOnly = el.readOnly;
-					el.contentEditable = true;
-					el.readOnly = false;
-					var range = document.createRange();
-					range.selectNodeContents(el);
-					var sel = window.getSelection();
-					sel.removeAllRanges();
-					sel.addRange(range);
-					el.setSelectionRange(0, 999999);
-					el.contentEditable = editable;
-					el.readOnly = readOnly;
-				} else {
-					key.select();
-				}
-				document.execCommand('copy');
-				key.blur();
-				this.$message({
-					message: '邀请链接：'+ this.ivtUrl +' 拷贝成功，快邀请小伙伴来玩吧！',
-					type: 'success'
-				});
+				this.copyLink();
 			}
+		},
+		copyLink(){
+			var key = document.getElementById("ivtUrl");
+			if (navigator.userAgent.match(/ipad|ipod|iphone/i)) {
+				var el = key;
+				var editable = el.contentEditable;
+				var readOnly = el.readOnly;
+				el.contentEditable = true;
+				el.readOnly = false;
+				var range = document.createRange();
+				range.selectNodeContents(el);
+				var sel = window.getSelection();
+				sel.removeAllRanges();
+				sel.addRange(range);
+				el.setSelectionRange(0, 999999);
+				el.contentEditable = editable;
+				el.readOnly = readOnly;
+			} else {
+				key.select();
+			}
+			document.execCommand('copy');
+			key.blur();
+			this.$message({
+				message: '邀请链接：'+ this.ivtUrl +' 拷贝成功，快邀请小伙伴来玩吧！',
+				type: 'success'
+			});
 		},
 		mobileAndTabletcheck() {
 			var check = false;
@@ -1163,8 +1179,10 @@ export default {
 			}
 		},
 		handleClick(tab, event) {
+
 		},
 		handleChange(value) {
+
       	}
 	},
 
