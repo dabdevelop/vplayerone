@@ -211,11 +211,9 @@ export default {
 			sellAmount: 0,
 			burnAmount: 0,
 			invitation: "",
-			ruleActive: '1',
-			secureActive: '1',
 			userName: '用户',
 			ivtUrl: "http://eosplayer.one/#/?ref=playeronefee",
-			refer: "playeronefee",
+			refer: "",
 			loading: false,
 			coolingMsg: '正在冷却中 ',
 			loading2: false,
@@ -229,38 +227,37 @@ export default {
 			deskClientURL: '',
 			source: 'https://github.com/dabdevelop/playerone/blob/master/playerone/playerone.cpp',
 			game:{
-				gameid: "oneplayerone",
-				reserve: "0.0000 EOS",
-				insure: "0.0000 EOS",
-				max_supply: "0.0000 CGT",
-				supply: "0.0000 CGT",
-				balance: "0.0000 CGT",
-				circulation: "0.0000 CGT",
-				burn: "0.0000 CGT",
-				staked: "0 CGT",
-				fee: "0.0000 EOS",
-				reward: "0.0000 EOS",
+				gameid: '',
+				reserve: "0.0000 ",
+				insure: "0.0000 ",
+				max_supply: "0.0000 ",
+				supply: "0.0000 ",
+				balance: "0.0000 ",
+				circulation: "0.0000 ",
+				burn: "0.0000 ",
+				staked: "0 ",
+				fee: "0.0000 ",
+				reward: "0.0000 ",
 				next_refer: "",
 				player_one: "",
 				start_time: 0,
 				reward_time: 0,
 			},
-
 			user:{
 				name: "",
 				parent: "",
-				reward: "0.0000 EOS",
+				reward: "0.0000 ",
 				last_action: 0,
 				refer: 0,
-				quota: 0,
+				quota: "0.0000 ",
 				discount: 0,
-				tokenBalance: 0,
-				eosBalance: 0,
+				tokenBalance: "0.0000 ",
+				eosBalance: "0.0000 ",
 			}
-  
 		}
 	},
 	created(){
+		this.refer = localStorage.getItem('refer') != undefined ? localStorage.getItem('refer') : 'playeronefee';
 		var env = localStorage.getItem('env') != undefined ? localStorage.getItem('env') : 'dev';
 		this.config = config.setENV(env);
 		if(this.config.env === 'dev'){
@@ -272,6 +269,44 @@ export default {
 				offset: 100
 			});
 		}
+		if(this.config.env === 'eos'){
+			this.$notify({
+				title: '提示',
+				message: '您正在使用EOS主网，目前头号玩家仍在ENU上测试，EOS版本敬请期待。',
+				duration: 0,
+				type: 'warning',
+				offset: 100
+			});
+		}
+		this.config.game = {
+			gameid: this.config.gameContract,
+			reserve: "0.0000 " + this.config.mainToken,
+			insure: "0.0000 " + this.config.mainToken,
+			max_supply: "0.0000 " + this.config.gameToken,
+			supply: "0.0000 " + this.config.gameToken,
+			balance: "0.0000 " + this.config.gameToken,
+			circulation: "0.0000 " + this.config.gameToken,
+			burn: "0.0000 " + this.config.gameToken,
+			staked: "0 " + this.config.mainToken,
+			fee: "0.0000 " + this.config.mainToken,
+			reward: "0.0000 " + this.config.mainToken,
+			next_refer: "",
+			player_one: "",
+			start_time: 0,
+			reward_time: 0,
+		};
+
+		this.config.user = {
+			name: "",
+			parent: "",
+			reward: "0.0000 " + this.config.mainToken,
+			last_action: 0,
+			refer: 0,
+			quota: "0.0000 " + this.config.mainToken,
+			discount: 0,
+			tokenBalance: "0.0000 " + this.config.gameToken,
+			eosBalance: "0.0000 " + this.config.mainToken,
+		};
 		if(this.config.env === 'enu'){
 			this.source = 'https://github.com/dabdevelop/playerone/blob/master/enuplayerone/playerone.cpp';
 		}
@@ -306,8 +341,10 @@ export default {
 						});
 						this.userName = this.account.name;
 						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name;
-						if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== '')
-						this.refer = this.$route.query.ref;
+						if(typeof this.$route.query.ref !== 'undefined' && this.$route.query.ref !== ''){
+							this.refer = this.$route.query.ref;
+							localStorage.SetItem('refer', this.refer);
+						}
 						this.getUser();
 					} else {
 						this.$message({
@@ -445,6 +482,16 @@ export default {
 			}
 		},
 		clientCheck(){
+			if(this.config.env === 'eos'){
+				this.$notify({
+					title: '提示',
+					message: '您正在使用EOS主网，目前头号玩家仍在ENU上测试，EOS版本敬请期待。',
+					duration: 0,
+					type: 'warning',
+					offset: 100
+				});
+				return false
+			}
 			if(!tp.isConnected()){
 				if(this.config.network.blockchain === 'eos' && typeof window.scatter === 'undefined'){
 					this.$message({
