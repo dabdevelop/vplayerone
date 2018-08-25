@@ -59,12 +59,12 @@
 							<div slot="header" class="clearfix">
 								<span>合约: {{this.config.gameContract}}</span>
 							</div>
-							{{config.gameToken}}发行量({{parseFloat(this.game.max_supply.split(' ')[0])/100000 * 2}}万):<el-progress :percentage="progress" color="#8e71c7"></el-progress>
+							{{config.gameToken}}流通量({{parseFloat(this.game.max_supply.split(' ')[0])/100000 * 2}}万):<el-progress :percentage="progress" color="#8e71c7"></el-progress>
 							<!-- <el-progress :text-inside="true" :stroke-width="18" :percentage="progress"></el-progress> -->
 							开始时间：{{ game.start_time > 0 ? new Date(game.start_time * 1000).toLocaleString():0 }}<br>
 							Pool：{{pool + ' ' + config.mainToken}}<br>
 							头号玩家：{{game.player_one}}<br>
-							头玩奖励：{{game.reward}}<br>
+							头玩奖池：{{game.reward}}<br>
 							头玩抵押：{{game.staked}}<br>
 							头玩奖励时间：{{ game.reward_time > 0 ? new Date(game.reward_time * 1000).toLocaleString():0 }}
 						</el-card>
@@ -128,7 +128,7 @@
 										<li><b>限量：</b>预售阶段用户每次免费额度<b>10{{config.mainToken}}</b>，购买邀请码可以获得额外额度。</li>
 										<li><b>邀请：</b>拥有邀请码的用户可以主动邀请新用户，直接成为他的手续费分红上级，享受其<b>0.5%</b>的交易手续费。预售前每次邀请还能够获得<b>1{{config.mainToken}}</b>额外额度，大于<b>200{{config.mainToken}}</b>后不能通过邀请继续增加。</li>
 									</ul>
-									<p><b>手续费：</b>通过邀请码注册的用户买卖手续费为<b>1.9%</b>，没有通过邀请码注册的用户为<b>2.8%</b>。手续费分配：<b>0.5%</b>给直接上级，<b>0.5%</b>给直接上级的上级，剩下的部分一半进入头号奖池，一半累积到Pool。</p>
+									<p><b>手续费：</b>通过邀请码注册的用户买卖手续费为<b>1.9%</b>，没有通过邀请码注册的用户为<b>2.8%</b>。手续费分配：<b>0.5%</b>给上级，<b>0.5%</b>给上级的上级，剩下的部分一半进入头玩奖池，一半累积到Pool。</p>
 								</el-tab-pane>
 							</el-tabs>
 						</el-card>
@@ -168,8 +168,8 @@
 								</el-tab-pane>
 								<el-tab-pane label="说明" name="forth">
 									<p>预售阶段，<b>不能出售，退出，抵押</b>。</p>
-									<p><b>退出：</b>是用户选择放弃Pool买卖的市场，选择直接从Pool清算，相当于最低保障。</p>
-									<p><b>抵押：</b>抵押最多的用户为头号玩家，<b>每24小时</b>可以分红头号奖池的<b>10%</b>，<b>前提是头号奖池不少于100{{config.mainToken}}</b>，抵押会产生<b>10%</b>的损耗，在解除抵押时扣除（自主解除或者被别人超越）。</p>
+									<p><b>退出：</b>是用户选择放弃买卖的市场，选择直接退出清算，相当于最低保障。</p>
+									<p><b>抵押：</b>抵押最多的用户为头号玩家，<b>每24小时</b>可以分红头玩奖池的<b>10%</b>，<b>前提是头号奖池不少于100{{config.mainToken}}</b>，抵押会产生<b>10%</b>的损耗，在解除抵押时扣除（自主解除或者被别人超越）。</p>
 								</el-tab-pane>
 							</el-tabs>
 						</el-card>
@@ -645,13 +645,13 @@ export default {
 				coolTime = this.user.last_action > Date.now() / 1000 ? (this.user.last_action - Date.now() / 1000).toFixed(0) : 0;
 				this.coolingMsg = '正在冷却中 ' + coolTime + ' s';
 			}
-			coolTime = (this.game.start_time + 60 * 60 ) > Date.now() / 1000 ? (this.game.start_time + 60 * 60 ) - Date.now() / 1000 : 0;
-			this.loading2 = (this.game.start_time + 60 * 60 ) > Date.now() / 1000;
+			coolTime = (this.game.start_time + 2 * 60 * 60 ) > Date.now() / 1000 ? (this.game.start_time + 2 * 60 * 60 ) - Date.now() / 1000 : 0;
+			this.loading2 = (this.game.start_time + 2 * 60 * 60 ) > Date.now() / 1000;
 			this.coolingMsg2 = '预售结束前不能出售、退出、抵押' + this.config.gameToken + ' 剩余 ' + coolTime.toFixed(0) + ' s';
-			this.price = (parseFloat(this.game.reserve.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(this.game.circulation.split(' ')[0]) - parseFloat(this.game.max_supply.split(' ')[0]) / 10) / (parseFloat(this.game.max_supply.split(' ')[0]) / 4))) * 0.9 + 0.05))).toFixed(4);
+			this.price = (parseFloat(this.game.reserve.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(this.game.circulation.split(' ')[0]) - parseFloat(this.game.max_supply.split(' ')[0]) / 10) / (parseFloat(this.game.max_supply.split(' ')[0]) / 40))) * 0.9 + 0.05))).toFixed(4);
 			this.burnPrice = (parseFloat(this.game.insure.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]))).toFixed(4);
 			this.pool = (parseFloat(this.game.reserve.split(' ')[0]) + parseFloat(this.game.insure.split(' ')[0]) + parseFloat(this.game.fee.split(' ')[0]) + parseFloat(this.game.reward.split(' ')[0])).toFixed(4);
-			this.progress = parseInt((parseFloat(this.game.supply.split(' ')[0]) / parseFloat(this.game.max_supply.split(' ')[0]) * 500).toFixed(0));
+			this.progress = parseInt((parseFloat(this.game.circulation.split(' ')[0]) / parseFloat(this.game.max_supply.split(' ')[0]) * 500).toFixed(0));
 		},
 		intervalRefresh(){
 			this.interval = setInterval(() => { 
@@ -669,7 +669,7 @@ export default {
 					title: this.config.mainToken + '头号玩家',
 					desc: '小伙伴' + this.account.name + '邀请你参与头号玩家，通过他的链接注册可以减少一半的手续费哦！',
 					url: this.ivtUrl,
-					previewImage: 'https://www.mytokenpocket.vip/images/index/logo.png'
+					previewImage: 'https://eosplayer.one/logo.jpg'
 				})
 			} else {
 				this.copyLink();
@@ -722,6 +722,12 @@ export default {
 				}); 
 			} else if(e.code == 500) {
 				this.$message.error('交易失败！');
+				this.$notify({
+					title: '错误',
+					message: e.error.details[0].message,
+					type: 'error',
+					offset: 100
+				});
 			}
 			console.log(e);
 		},
@@ -781,6 +787,25 @@ export default {
 			var to = this.config.gameContract;
 			var amount = parseFloat(this.buyAmount).toFixed(4);
 			var memo = this.refer;
+			if((this.game.start_time + 2 * 60 * 60 ) > Date.now() / 1000 && Date.now() / 1000 > this.game.start_time && amount > 10 + this.user.quota){
+				this.$message({
+					type: 'warning',
+					message: '最多买入' + (10 + this.user.quota) + this.config.mainToken + '，超过额度交易会失败！'
+				}); 
+				return
+			} else if(amount > parseFloat(this.user.eosBalance.split(' ')[0])){
+				this.$message({
+					type: 'warning',
+					message: '最多买入' + this.user.eosBalance + '，' + this.config.mainToken + '余额不足！'
+				}); 
+				return
+			} else if(amount < 1){
+				this.$message({
+					type: 'warning',
+					message: '至少买入1' + this.config.mainToken + '！'
+				}); 
+				return
+			}
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
@@ -831,6 +856,20 @@ export default {
 			var to = this.config.gameContract;
 			var amount = parseFloat(this.sellAmount).toFixed(4); 
 			var memo = this.refer;
+			var max_sell = Math.min(Math.min(10000, 100 / this.price), parseFloat(this.user.tokenBalance.split(' '[0])));
+			if(amount > max_sell){
+				this.$message({
+					type: 'warning',
+					message: '最多卖出' + Math.floor(max_sell) + this.config.gameToken  + '，超过交易会失败！'
+				}); 
+				return
+			} else if(amount < 1 / this.price){
+				this.$message({
+					type: 'warning',
+					message: '至少卖出' + Math.ceil(1 / this.price) + this.config.gameToken + '，至少卖出1' + this.config.mainToken +'等值的CGT！'
+				}); 
+				return;
+			}
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
@@ -882,6 +921,20 @@ export default {
 			var to = this.config.gameContract;
 			var amount = parseFloat(this.burnAmount).toFixed(4); 
 			var memo = "burn";
+			var max_burn = Math.min(Math.min(10000, 100 / this.burnPrice), parseFloat(this.user.tokenBalance.split(' '[0])));
+			if(amount > max_burn){
+				this.$message({
+					type: 'warning',
+					message: '最多退出' + Math.floor(max_burn) + this.config.gameToken  + '，超过交易会失败！'
+				}); 
+				return
+			} else if(amount < 1 / this.burnPrice){
+				this.$message({
+					type: 'warning',
+					message: '至少退出' + Math.ceil(1 / this.burnPrice) + this.config.gameToken + '，至少退出1' + this.config.mainToken +'等值的CGT！'
+				}); 
+				return;
+			}
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
@@ -987,6 +1040,14 @@ export default {
 			var to = this.config.gameContract;
 			var amount = parseFloat(0.0001).toFixed(4);
 			var memo = this.invitation;
+			var test = new RegExp('[1-4a-z\.]{1,12}').exec(memo);
+			if(test == null || test[0] !== memo){
+				this.$message({
+					type: 'warning',
+					message: '请输入正确的' + this.config.mainToken + '账号！'
+				}); 
+				return
+			}
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
@@ -1037,6 +1098,13 @@ export default {
 			var to = this.config.gameContract;
 			var amount = parseFloat(this.stakeAmount).toFixed(4); 
 			var memo = "stake";
+			if(amount <= parseFloat(this.game.staked.split(' ')[0]) && this.user.name !== this.game.player_one){
+				this.$message({
+					type: 'warning',
+					message: '需要抵押超过当前头号玩家的抵押数量！'
+				}); 
+				return;
+			}
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
@@ -1087,6 +1155,13 @@ export default {
 			var to = this.config.gameContract;
 			var amount = "0.0003";
 			var memo = "通过向合约转账0.0003" + this.config.mainToken + "解除抵押";
+			if(this.user.name !== this.game.player_one){
+				this.$message({
+					type: 'warning',
+					message: '只有头号玩家能够解除抵押！'
+				}); 
+				return;
+			}
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
@@ -1136,7 +1211,7 @@ export default {
 			var from = this.account.name;
 			var to = this.config.gameContract;
 			var amount = "0.0001";
-			var memo = "通过向合约转账0.0001" + this.config.mainToken +"领取邀请人奖励";
+			var memo = "通过向合约转账0.0001" + this.config.mainToken +"领取邀请奖励";
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
@@ -1186,7 +1261,14 @@ export default {
 			var from = this.account.name;
 			var to = this.config.gameContract;
 			var amount = "0.0002";
-			var memo = "通过向合约转账0.0002" + this.config.mainToken +"领取头号奖励";
+			var memo = "通过向合约转账0.0002" + this.config.mainToken +"领取头玩奖励";
+			if(this.user.name !== this.game.player_one){
+				this.$message({
+					type: 'warning',
+					message: '只有头号玩家能够领取头玩奖励！'
+				}); 
+				return;
+			}
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
