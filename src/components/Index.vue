@@ -13,7 +13,7 @@
 				<b-navbar-nav class="ml-auto">
 					<b-nav-form>
 						<b-form-input size="sm" class="mr-sm-2" type="text" v-model="ivtUrl" id="ivtUrl"/>
-						<b-button size="sm" variant="outline-success" class="my-2 my-sm-0" @click.prevent="copyLink">复制邀请链接</b-button>
+						<b-button size="sm" variant="outline-success" class="my-2 my-sm-0" @click.prevent="copyLink">邀请奖励</b-button>
 					</b-nav-form>
 					<b-nav-item-dropdown v-bind:text="config.networkName" right>
 						<b-dropdown-item @click.prevent="switchNet('eos')" v-bind:disabled="config.env === 'eos'">EOS主网</b-dropdown-item>
@@ -81,7 +81,7 @@
 							预售额外额度：{{user.quota}} <br>
 							上次操作时间：{{ user.last_action > 0 ?new Date(user.last_action * 1000).toLocaleString() : 0 }}<br>
 							<el-button @click.prevent="login" type="success">登陆</el-button>
-							<el-button type="success" @click.prevent="shareLink">分享</el-button>
+							<el-button type="success" @click.prevent="shareLink">邀请奖励</el-button>
 							<el-button @click.prevent="leaseCPU" type="success" v-bind:disabled="config.env!=='eos'">租赁CPU</el-button>
 						</el-card>
 					</div>
@@ -121,12 +121,12 @@
 									<el-button @click.prevent="invite" type="primary" >邀请</el-button>
 									<br>
 								</el-tab-pane>
-								<el-tab-pane label="说明" name="forth">
-									<p>前2个小时为预售阶段，<b>买入限时限量</b>。</p>
+								<el-tab-pane label="怎么玩" name="forth">
+									<p><b style="color: red;">前10分钟为预售阶段，买入限时限量</b>。</p>
 									<ul>
-										<li><b>限时：</b>每个用户会有<b>平均30秒</b>的冷却时间，连续两次买入间隔越短，下一次冷却时间越长，<b>t = 225 / (dt + 1)</b>，t为冷却时间，<b>dt是冷却后<b style="color: red;">等待</b>的时间</b>。预售结束后冷却时间降为<b>1</b>秒。</li>
-										<li><b>限量：</b>预售阶段用户每次免费额度<b>10{{config.mainToken}}</b>，购买邀请码可以获得额外额度。</li>
-										<li><b>邀请：</b>拥有邀请码的用户可以主动邀请新用户，直接成为他的手续费分红上级，享受其<b>0.5%</b>的交易手续费。预售前每次邀请还能够获得<b>1{{config.mainToken}}</b>额外额度，大于<b>200{{config.mainToken}}</b>后不能通过邀请继续增加。</li>
+										<li><b>限时：</b>每个用户会有<b style="color: red;">平均30秒</b>的冷却时间，前两次买入间隔越短，下次买入冷却时间越长，<b>t = 225 / (dt + 1)</b>，t为冷却时间，<b>dt是冷却后<b style="color: red;">等待</b>的时间（根据公式，等待15秒最佳，但是玩家可以灵活地选择进入方式）</b>。预售结束后冷却时间降为<b>1</b>秒。</li>
+										<li><b>限量：</b>预售阶段用户<b style="color: red;">每次免费额度10{{config.mainToken}}</b>，<b style="color: red;">购买邀请码可以获得等量额外额度</b>。</li>
+										<li><b>邀请：</b>拥有邀请码的用户可以主动邀请新用户，成为他的上级，享受其<b>0.5%</b>的交易手续费。<b style="color: red;">预售前每次成功的邀请还能够获得1{{config.mainToken}}额外额度（适合各游戏社区群主）</b>，大于<b>200{{config.mainToken}}</b>后不能通过邀请继续增加。</li>
 									</ul>
 									<p><b>手续费：</b>通过邀请码注册的用户买卖手续费为<b>1.9%</b>，没有通过邀请码注册的用户为<b>2.8%</b>。手续费分配：<b>0.5%</b>给上级，<b>0.5%</b>给上级的上级，剩下的部分一半进入头玩奖池，一半累积到Pool。</p>
 								</el-tab-pane>
@@ -166,10 +166,10 @@
 									<el-button @click.prevent="stake" type="danger" >抵押</el-button>
 									<br>
 								</el-tab-pane>
-								<el-tab-pane label="说明" name="forth">
-									<p>预售阶段，<b>不能出售，退出，抵押</b>。</p>
+								<el-tab-pane label="怎么玩" name="forth">
+									<p><b style="color: red;">预售阶段，不能出售，退出，抵押</b>。</p>
 									<p><b>退出：</b>是用户选择放弃买卖的市场，选择直接退出清算，相当于最低保障。</p>
-									<p><b>抵押：</b>抵押最多的用户为头号玩家，<b>每24小时</b>可以分红头玩奖池的<b>10%</b>，<b>前提是头号奖池不少于100{{config.mainToken}}</b>，抵押会产生<b>10%</b>的损耗，在解除抵押时扣除（自主解除或者被别人超越）。</p>
+									<p><b>抵押：</b><b style="color: red;">抵押最多的用户为头号玩家</b>，<b>每24小时</b>可以分红头玩奖池的<b>10%</b>，<b>前提是头号奖池不少于100{{config.mainToken}}</b>，<b style="color: red;">抵押会产生10%的损耗</b>，在解除抵押时扣除（自主解除或者被别人超越）。</p>
 								</el-tab-pane>
 							</el-tabs>
 						</el-card>
@@ -269,15 +269,7 @@ export default {
 				offset: 100
 			});
 		}
-		if(this.config.env === 'eos'){
-			this.$notify({
-				title: '提示',
-				message: '您正在使用EOS主网，目前头号玩家仍在ENU上测试，EOS版本敬请期待。',
-				duration: 0,
-				type: 'warning',
-				offset: 100
-			});
-		}
+
 		this.config.game = {
 			gameid: this.config.gameContract,
 			reserve: "0.0000 " + this.config.mainToken,
@@ -488,16 +480,6 @@ export default {
 			this.env = localStorage.getItem('env-overide') != undefined ? localStorage.getItem('env-overide') : env;
 		},
 		clientCheck(){
-			if(this.config.env === 'eos'){
-				this.$notify({
-					title: '提示',
-					message: '您正在使用EOS主网，目前头号玩家仍在ENU上测试，EOS版本敬请期待。',
-					duration: 0,
-					type: 'warning',
-					offset: 100
-				});
-				return false
-			}
 			if(!tp.isConnected()){
 				if(this.config.network.blockchain === 'eos' && typeof window.scatter === 'undefined'){
 					this.$message({
@@ -513,15 +495,9 @@ export default {
 					return false;
 				}
 			} else {
-				if(this.account.blockchain_id == 5 && this.config.env !== 'enu'){
+				if(this.account.blockchain_id != 4 && this.account.blockchain_id != 5){
 					this.$message({
-						message: '钱包和网络不一致，当前为ENU钱包，请切换到ENU主网或者切换到EOS钱包！',
-						type: 'warning'
-					});
-					return false;
-				} else if(this.account.blockchain_id == 4 && this.config.env !== 'eos'){
-					this.$message({
-						message: '钱包和网络不一致，当前为EOS钱包，请切换到EOS主网或者切换到ENU钱包！',
+						message: '当前在' + this.config.networkName + '，请切换到' + this.config.mainToken+ '钱包！',
 						type: 'warning'
 					});
 					return false;
@@ -531,9 +507,15 @@ export default {
 						type: 'warning'
 					});
 					return false;
-				} else if(this.account.blockchain_id != 4 && this.account.blockchain_id != 5){
+				} else if(this.account.blockchain_id == 5 && this.config.env !== 'enu'){
 					this.$message({
-						message: '当前在' + this.config.networkName + '，请切换到' + this.config.mainToken+ '钱包！',
+						message: '钱包和网络不一致，当前为ENU钱包，请切换到ENU主网或者切换到EOS钱包！',
+						type: 'warning'
+					});
+					return false;
+				} else if(this.account.blockchain_id == 4 && this.config.env !== 'eos'){
+					this.$message({
+						message: '钱包和网络不一致，当前为EOS钱包，请切换到EOS主网或者切换到ENU钱包！',
 						type: 'warning'
 					});
 					return false;
@@ -645,8 +627,8 @@ export default {
 				coolTime = this.user.last_action > Date.now() / 1000 ? (this.user.last_action - Date.now() / 1000).toFixed(0) : 0;
 				this.coolingMsg = '正在冷却中 ' + coolTime + ' s';
 			}
-			coolTime = (this.game.start_time + 2 * 60 * 60 ) > Date.now() / 1000 ? (this.game.start_time + 2 * 60 * 60 ) - Date.now() / 1000 : 0;
-			this.loading2 = (this.game.start_time + 2 * 60 * 60 ) > Date.now() / 1000;
+			coolTime = (this.game.start_time + 10 * 60 ) > Date.now() / 1000 ? (this.game.start_time + 10 * 60 ) - Date.now() / 1000 : 0;
+			this.loading2 = (this.game.start_time + 10 * 60 ) > Date.now() / 1000;
 			this.coolingMsg2 = '预售结束前不能出售、退出、抵押' + this.config.gameToken + ' 剩余 ' + coolTime.toFixed(0) + ' s';
 			this.price = (parseFloat(this.game.reserve.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]) * (1.0 / (1 + Math.pow(2.71828182845904, (parseFloat(this.game.circulation.split(' ')[0]) - parseFloat(this.game.max_supply.split(' ')[0]) / 10) / (parseFloat(this.game.max_supply.split(' ')[0]) / 40))) * 0.9 + 0.05))).toFixed(4);
 			this.burnPrice = (parseFloat(this.game.insure.split(' ')[0])  / (parseFloat(this.game.circulation.split(' ')[0]))).toFixed(4);
@@ -787,7 +769,7 @@ export default {
 			var to = this.config.gameContract;
 			var amount = parseFloat(this.buyAmount).toFixed(4);
 			var memo = this.refer;
-			if((this.game.start_time + 2 * 60 * 60 ) > Date.now() / 1000 && Date.now() / 1000 > this.game.start_time && amount > 10 + this.user.quota){
+			if((this.game.start_time + 10 * 60 ) > Date.now() / 1000 && Date.now() / 1000 > this.game.start_time && amount > 10 + this.user.quota){
 				this.$message({
 					type: 'warning',
 					message: '最多买入' + (10 + this.user.quota) + this.config.mainToken + '，超过额度交易会失败！'
@@ -990,6 +972,13 @@ export default {
 			var to = this.config.gameContract;
 			var amount = parseFloat(this.depositAmount).toFixed(4);
 			var memo = "deposit";
+			if(amount > parseFloat(this.user.eosBalance.split(' ')[0])){
+				this.$message({
+					type: 'warning',
+					message: '最多买入' + this.user.eosBalance + '，' + this.config.mainToken + '余额不足！'
+				}); 
+				return
+			}
 			if(tp.isConnected()){
 				tp.eosTokenTransfer({
 					from: from,
