@@ -226,7 +226,7 @@ export default {
 			mobile: false,
 			deskClient: '',
 			deskClientURL: '',
-			source: 'https://github.com/dabdevelop/playerone/blob/master/playerone/playerone.cpp',
+			source: 'https://github.com/DAB-Foundation/playerone',
 			game:{
 				gameid: '',
 				reserve: "0.0000 ",
@@ -299,9 +299,6 @@ export default {
 			tokenBalance: "0.0000 " + this.config.gameToken,
 			eosBalance: "0.0000 " + this.config.mainToken,
 		};
-		if(this.config.env === 'enu'){
-			this.source = 'https://github.com/dabdevelop/playerone/blob/master/enuplayerone/playerone.cpp';
-		}
 		this.eosClient = EOS(this.config.options);
 		if(tp.isConnected()){
 			tp.getCurrentWallet().then(data => {
@@ -476,7 +473,7 @@ export default {
 				localStorage.setItem('env', this.env);
 			}
 			this.refer = localStorage.getItem('refer') != undefined ? localStorage.getItem('refer') : 'playeronefee';
-			var env = localStorage.getItem('env') != undefined ? localStorage.getItem('env') : 'enu';
+			var env = localStorage.getItem('env') != undefined ? localStorage.getItem('env') : 'eos';
 			this.env = localStorage.getItem('env-overide') != undefined ? localStorage.getItem('env-overide') : env;
 		},
 		clientCheck(){

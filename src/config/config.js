@@ -1,5 +1,5 @@
 /* jshint esversion: 6 */ 
-var ENV = 'enu';
+var ENV = 'eos';
 var network;
 var options;
 var networkName;
