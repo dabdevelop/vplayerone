@@ -18,7 +18,7 @@
 					<b-nav-item-dropdown v-bind:text="config.networkName" right>
 						<b-dropdown-item @click.prevent="switchNet('eos')" v-bind:disabled="config.env === 'eos'">EOS主网</b-dropdown-item>
 						<b-dropdown-item @click.prevent="switchNet('enu')" v-bind:disabled="config.env === 'enu'">ENU主网</b-dropdown-item>
-						<b-dropdown-item @click.prevent="switchNet('dev')" v-bind:disabled="config.env === 'dev'">测试网</b-dropdown-item>
+						<!-- <b-dropdown-item @click.prevent="switchNet('dev')" v-bind:disabled="config.env === 'dev'">测试网</b-dropdown-item> -->
 					</b-nav-item-dropdown>
 					<b-nav-item-dropdown right>
 						<!-- Using button-content slot -->
@@ -96,7 +96,7 @@
 								v-bind:element-loading-text="coolingMsg"
     							element-loading-spinner="el-icon-loading">
 									<p>请输入{{config.mainToken}}数量 {{ price + ' '+ config.mainToken +'/' + config.gameToken }}</p> 
-									<el-input-number v-model="buyAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
+									<el-input-number v-model="buyAmount" @change="handleChange" :min="0" :max="100" :step="5" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="buy" type="primary">购买</el-button>
 									<el-button @click.prevent="deposit" type="info" disabled>购买</el-button>
@@ -105,7 +105,7 @@
 								</el-tab-pane>
 								<el-tab-pane label="购买邀请码" name="second">
 									<p>请输入{{config.mainToken}}数量 1{{config.mainToken}}/邀请码</p> 
-									<el-input-number v-model="depositAmount" @change="handleChange" :min="0" :max="100" :precision="2" :step="10" label="描述文字"></el-input-number>
+									<el-input-number v-model="depositAmount" @change="handleChange" :min="1" :max="100" :step="1" label="描述文字"></el-input-number>
 									<br><br>
 									<el-button @click.prevent="buy" type="info" disabled>购买</el-button>
 									<el-button @click.prevent="deposit" type="primary" >购买</el-button>
@@ -121,7 +121,7 @@
 									<el-button @click.prevent="invite" type="primary" >邀请</el-button>
 									<br>
 								</el-tab-pane>
-								<el-tab-pane label="怎么玩" name="forth">
+								<!-- <el-tab-pane label="怎么玩" name="forth">
 									<p><b style="color: red;">前10分钟为预售阶段，买入限时限量</b>。</p>
 									<ul>
 										<li><b>限时：</b>每个用户会有<b style="color: red;">平均30秒</b>的冷却时间，前两次买入间隔越短，下次买入冷却时间越长，<b>t = 225 / (dt + 1)</b>，t为冷却时间，<b>dt是冷却后<b style="color: red;">等待</b>的时间（根据公式，等待15秒最佳，但是玩家可以灵活地选择进入方式）</b>。预售结束后冷却时间降为<b>1</b>秒。</li>
@@ -129,7 +129,7 @@
 										<li><b>邀请：</b>拥有邀请码的用户可以主动邀请新用户，成为他的上级，享受其<b>0.5%</b>的交易手续费。<b style="color: red;">预售前每次成功的邀请还能够获得1{{config.mainToken}}额外额度（适合各游戏社区群主）</b>，大于<b>200{{config.mainToken}}</b>后不能通过邀请继续增加。</li>
 									</ul>
 									<p><b>手续费：</b>通过邀请码注册的用户买卖手续费为<b>1.9%</b>，没有通过邀请码注册的用户为<b>2.8%</b>。手续费分配：<b>0.5%</b>给上级，<b>0.5%</b>给上级的上级，剩下的部分一半进入头玩奖池，一半累积到Pool。</p>
-								</el-tab-pane>
+								</el-tab-pane> -->
 							</el-tabs>
 						</el-card>
 					</div>
@@ -166,11 +166,11 @@
 									<el-button @click.prevent="stake" type="danger" >抵押</el-button>
 									<br>
 								</el-tab-pane>
-								<el-tab-pane label="怎么玩" name="forth">
+								<!-- <el-tab-pane label="怎么玩" name="forth">
 									<p><b style="color: red;">预售阶段，不能出售，退出，抵押</b>。</p>
 									<p><b>退出：</b>是用户选择放弃买卖的市场，选择直接退出清算，相当于最低保障。</p>
 									<p><b>抵押：</b><b style="color: red;">抵押最多的用户为头号玩家</b>，<b>每24小时</b>可以分红头玩奖池的<b>10%</b>，<b>前提是头号奖池不少于100{{config.mainToken}}</b>，<b style="color: red;">抵押会产生10%的损耗</b>，在解除抵押时扣除（自主解除或者被别人超越）。</p>
-								</el-tab-pane>
+								</el-tab-pane> -->
 							</el-tabs>
 						</el-card>
 					</div>
@@ -270,7 +270,7 @@ export default {
 			});
 		}
 
-		this.config.game = {
+		this.game = {
 			gameid: this.config.gameContract,
 			reserve: "0.0000 " + this.config.mainToken,
 			insure: "0.0000 " + this.config.mainToken,
@@ -288,7 +288,7 @@ export default {
 			reward_time: 0,
 		};
 
-		this.config.user = {
+		this.user = {
 			name: "",
 			parent: "",
 			reward: "0.0000 " + this.config.mainToken,
@@ -345,31 +345,7 @@ export default {
 		} else {
 			var clientLoaded = this.config.network.blockchain === 'eos'? 'scatterLoaded':'ironmanLoaded';
 			document.addEventListener(clientLoaded, scatterExtension => {
-				if(this.config.network.blockchain === 'enu'){
-					this.scatter = window.ironman;
-					this.scatter.requireVersion(1.1);
-					this.scatterEosClient = this.scatter.enu(this.config.network, EOS, this.config.options, "http");
-				} else if(this.config.network.blockchain === 'eos'){
-					this.scatter = window.scatter;
-					this.scatter.requireVersion(3.0);
-					this.scatterEosClient = this.scatter.eos(this.config.network, EOS, this.config.options, "http");
-				}
-				this.scatter.getIdentity({
-					accounts: [this.config.network]
-				}).then(identity => {
-					if (identity && identity.accounts.length > 0) {
-						this.account = identity.accounts.find(account => account.blockchain === this.config.network.blockchain);
-						this.$message({
-							message: '用户：' + this.account.name + '登陆成功！',
-							type: 'success'
-						});
-						this.userName = this.account.name;
-						this.ivtUrl = "http://eosplayer.one/#/?ref=" + this.account.name + '&env=' + this.env;
-						this.getUser();
-					}
-				}).catch(error => {
-					this.errorNotice(error);
-				});
+				this.login();
 			})
 		}
 		this.mobile = this.mobileAndTabletcheck();
@@ -388,6 +364,8 @@ export default {
 	methods: {
 		login() {
 			this.urlCheck();
+			this.config = config.setENV(this.env);
+			this.eosClient = EOS(this.config.options);
 			if(tp.isConnected()){
 				tp.getCurrentWallet().then(data => {
 					if(data.result){
@@ -398,16 +376,14 @@ export default {
 						this.account = data.data;
 						if(this.account.blockchain_id == 5 && this.config.env !== 'enu'){
 							this.$message({
-								message: '正在切换到ENU网络！',
-								type: 'success'
+								message: '钱包和网络不一致，请切换到ENU主网或者切换到EOS钱包！',
+								type: 'warning'
 							});
-							this.switchNet('enu')
 						} else if(this.account.blockchain_id == 4 && this.config.env !== 'eos'){
 							this.$message({
-								message: '正在切换EOS网络！',
-								type: 'success'
+								message: '钱包和网络不一致，请切换到EOS主网或者切换到ENU钱包！',
+								type: 'warning'
 							});
-							this.switchNet('eos')
 						} else if(this.account.blockchain_id == 4 || this.account.blockchain_id == 5){
 							this.$message({
 								message: '用户：' + this.account.name + '登陆成功！',
@@ -418,7 +394,7 @@ export default {
 							this.getUser();
 						} else {
 							this.$message({
-								message: '请切换EOS或者ENU账户！',
+								message: '请切换到EOS或ENU钱包！',
 								type: 'warning'
 							});
 						}
@@ -427,8 +403,17 @@ export default {
 				if(this.config.env === 'enu'){
 					tp.eosTokenTransfer = _tp.enuTokenTransfer;
 				}
-			} else{
+			} else {
 				if(!this.clientCheck()) return;
+				if(this.config.network.blockchain === 'enu'){
+					this.scatter = window.ironman;
+					this.scatter.requireVersion(1.1);
+					this.scatterEosClient = this.scatter.enu(this.config.network, EOS, this.config.options, "http");
+				} else {
+					this.scatter = window.scatter;
+					this.scatter.requireVersion(3.0);
+					this.scatterEosClient = this.scatter.eos(this.config.network, EOS, this.config.options, "http");
+				}
 				this.scatter.getIdentity({
 					accounts: [this.config.network]
 				}).then(identity => {
@@ -457,6 +442,18 @@ export default {
 						});
 						this.userName = '用户';
 						this.ivtUrl = "http://eosplayer.one/#/?ref=playeronefee" + '&env=' + this.env;
+						this.account = "";
+						this.user = {
+							name: "",
+							parent: "",
+							reward: "0.0000 " + this.config.mainToken,
+							last_action: 0,
+							refer: 0,
+							quota: "0.0000 " + this.config.mainToken,
+							discount: 0,
+							tokenBalance: "0.0000 " + this.config.gameToken,
+							eosBalance: "0.0000 " + this.config.mainToken,
+						};
 					});
 				}
 			} catch(e){
@@ -478,18 +475,18 @@ export default {
 		},
 		clientCheck(){
 			if(!tp.isConnected()){
-				if(this.config.network.blockchain === 'eos' && typeof window.scatter === 'undefined'){
+				if(this.config.network.blockchain === 'eos' && typeof window.scatter === 'undefined') {
 					this.$message({
 						message: '请使用Chrome浏览器并安装Scatter钱包，或者移动端在TokenPocket环境下使用！',
 						type: 'warning'
 					});
-					return false;
+					// return false;
 				} else if(this.config.network.blockchain === 'enu' && typeof window.ironman === 'undefined'){
 					this.$message({
 						message: '请使用Chrome浏览器并安装Ironman钱包，或者移动端在TokenPocket环境下使用',
 						type: 'warning'
 					});
-					return false;
+					// return false;
 				}
 			} else {
 				if(this.account.blockchain_id != 4 && this.account.blockchain_id != 5){
@@ -497,25 +494,19 @@ export default {
 						message: '当前在' + this.config.networkName + '，请切换到' + this.config.mainToken+ '钱包！',
 						type: 'warning'
 					});
-					return false;
-				} else if(this.config.env === 'dev'){
-					this.$message({
-						message: '当前在测试网环境，请切换到EOS主网或ENU主网！',
-						type: 'warning'
-					});
-					return false;
+					// return false;
 				} else if(this.account.blockchain_id == 5 && this.config.env !== 'enu'){
 					this.$message({
 						message: '钱包和网络不一致，当前为ENU钱包，请切换到ENU主网或者切换到EOS钱包！',
 						type: 'warning'
 					});
-					return false;
+					// return false;
 				} else if(this.account.blockchain_id == 4 && this.config.env !== 'eos'){
 					this.$message({
 						message: '钱包和网络不一致，当前为EOS钱包，请切换到EOS主网或者切换到ENU钱包！',
 						type: 'warning'
 					});
-					return false;
+					// return false;
 				}
 			}
 			return true;
@@ -635,7 +626,7 @@ export default {
 		intervalRefresh(){
 			this.interval = setInterval(() => { 
             	this.refresh();
-        	}, 500)
+        	}, 1000)
 		},
 		switchNet(net){
 			this.logout();
@@ -1026,7 +1017,7 @@ export default {
 			var to = this.config.gameContract;
 			var amount = parseFloat(0.0001).toFixed(4);
 			var memo = this.invitation;
-			var test = new RegExp('[1-4a-z\.]{1,12}').exec(memo);
+			var test = new RegExp('[1-5a-z\.]{1,12}').exec(memo);
 			if(test == null || test[0] !== memo){
 				this.$message({
 					type: 'warning',

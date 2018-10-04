@@ -17,7 +17,6 @@
     "eosjs-ecc": "^4.0.3",
     "es6-promise": "^4.2.4",
     "fs-extra": "^7.0.0",
-    "jquery": "^1.9.1",
     "moment": "^2.22.2",
     "tp-enujs": "^1.0.2",
     "tp-eosjs": "^1.2.2",
